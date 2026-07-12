@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { findHytraxRoot, getKnowledgeDir } from '../../utils/paths.js';
-import { scaffoldOKF, generateKnowledgeTemplate } from '../../knowledge/scaffold.js';
+import { scaffoldOKF } from '../../knowledge/scaffold.js';
 import type { OKFType } from '../../knowledge/types.js';
 
 const VALID_TYPES = ['architecture', 'decision', 'constraint', 'convention', 'workflow', 'api', 'feature', 'preference'];

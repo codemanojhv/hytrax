@@ -3,9 +3,6 @@ import { loadKnowledge } from '../knowledge/loader.js';
 import { loadOutcomes } from '../outcomes/reader.js';
 import { getOutcomesFile } from '../utils/paths.js';
 
-/**
- * Tokenize query string into lowercase tokens.
- */
 function tokenize(query: string): string[] {
   return query
     .toLowerCase()
@@ -13,42 +10,77 @@ function tokenize(query: string): string[] {
     .filter(t => t.length > 0);
 }
 
-/**
- * Check if a token matches a tag (exact or substring).
- */
 function tagMatches(token: string, tags: string[]): boolean {
   return tags.some(t => t.toLowerCase().includes(token) || token.includes(t.toLowerCase()));
 }
 
-/**
- * Check if a token matches a string (word boundary).
- */
-function wordMatches(token: string, text: string): boolean {
+function wordMatch(token: string, text: string): boolean {
+  if (!text) return false;
   const lower = text.toLowerCase();
   return lower === token || lower.startsWith(token + ' ') || lower.includes(' ' + token);
 }
 
-/**
- * Check if token matches filename.
- */
-function filenameMatches(token: string, filePath: string): boolean {
+function anyWordMatch(tokens: string[], text: string): boolean {
+  return tokens.some(t => wordMatch(t, text));
+}
+
+function anyTagMatch(tokens: string[], tags: string[]): boolean {
+  return tokens.some(t => tagMatches(t, tags));
+}
+
+function filenameMatch(token: string, filePath: string): boolean {
   return filePath.toLowerCase().includes(token);
 }
 
-interface ScoredKnowledge {
+function anyFilenameMatch(tokens: string[], filePath: string): boolean {
+  return tokens.some(t => filenameMatch(t, filePath));
+}
+
+type MatchPriority = 1 | 2 | 3 | 4;
+
+interface KnowledgeMatch {
   doc: OKFDocument;
-  score: number;
+  priority: MatchPriority;
 }
 
-interface ScoredOutcome {
+interface OutcomeMatch {
   record: OutcomeRecord;
-  score: number;
+  priority: MatchPriority;
 }
 
-/**
- * Main search function. Deterministic tag/keyword matching.
- * Priority: tag > title > summary > filename
- */
+function getKnowledgePriority(doc: OKFDocument, tokens: string[]): MatchPriority | null {
+  // Priority 1: Tag match (strongest signal)
+  if (anyTagMatch(tokens, doc.metadata.tags)) return 1;
+
+  // Priority 2: Title match
+  if (anyWordMatch(tokens, doc.metadata.title)) return 2;
+
+  // Priority 3: Filename match
+  if (anyFilenameMatch(tokens, doc.filePath)) return 3;
+
+  // Priority 4: Summary match (weakest signal)
+  if (anyWordMatch(tokens, doc.metadata.summary)) return 4;
+
+  return null;
+}
+
+function getOutcomePriority(record: OutcomeRecord, tokens: string[]): MatchPriority | null {
+  // Priority 1: Task description match
+  if (anyWordMatch(tokens, record.task)) return 1;
+
+  // Priority 2: Reason match
+  if (record.reason && anyWordMatch(tokens, record.reason)) return 2;
+
+  // Priority 3: Type or area match
+  if ((record.type && anyWordMatch(tokens, record.type)) ||
+      (record.area && anyWordMatch(tokens, record.area))) return 3;
+
+  // Priority 4: ID match
+  if (tokens.some(t => record.id.toLowerCase().includes(t))) return 4;
+
+  return null;
+}
+
 export function search(
   hytraxRoot: string,
   query: string,
@@ -73,63 +105,36 @@ export function search(
       ? allKnowledge.filter(d => d.metadata.type === filterType)
       : allKnowledge;
 
-    const scored: ScoredKnowledge[] = [];
+    const matched: KnowledgeMatch[] = [];
 
     for (const doc of filtered) {
-      let score = 0;
-
-      for (const token of tokens) {
-        // Tag match (highest priority)
-        if (tagMatches(token, doc.metadata.tags)) score += 10;
-        // Title match
-        if (wordMatches(token, doc.metadata.title)) score += 7;
-        // Summary match
-        if (wordMatches(token, doc.metadata.summary)) score += 4;
-        // Filename match
-        if (filenameMatches(token, doc.filePath)) score += 3;
-        // ID match
-        if (doc.metadata.id.toLowerCase().includes(token)) score += 5;
-      }
-
-      if (score > 0) {
-        scored.push({ doc, score });
+      const priority = getKnowledgePriority(doc, tokens);
+      if (priority !== null) {
+        matched.push({ doc, priority });
       }
     }
 
-    // Sort by score descending
-    scored.sort((a, b) => b.score - a.score);
-    result.knowledge = scored.slice(0, max).map(s => s.doc);
+    // Sort by priority (1 = best), then by insertion order
+    matched.sort((a, b) => a.priority - b.priority);
+    result.knowledge = matched.slice(0, max).map(m => m.doc);
   }
 
   if (includeOutcomes) {
     const outcomesFile = getOutcomesFile(hytraxRoot);
     const allOutcomes = loadOutcomes(outcomesFile);
 
-    const scored: ScoredOutcome[] = [];
+    const matched: OutcomeMatch[] = [];
 
     for (const record of allOutcomes) {
-      let score = 0;
-
-      for (const token of tokens) {
-        // Task description match
-        if (wordMatches(token, record.task)) score += 8;
-        // Reason match
-        if (record.reason && wordMatches(token, record.reason)) score += 5;
-        // Type match
-        if (record.type && record.type.toLowerCase().includes(token)) score += 3;
-        // Area match
-        if (record.area && record.area.toLowerCase().includes(token)) score += 3;
-        // ID match
-        if (record.id.toLowerCase().includes(token)) score += 2;
-      }
-
-      if (score > 0) {
-        scored.push({ record, score });
+      const priority = getOutcomePriority(record, tokens);
+      if (priority !== null) {
+        matched.push({ record, priority });
       }
     }
 
-    scored.sort((a, b) => b.score - a.score);
-    result.outcomes = scored.slice(0, max).map(s => s.record);
+    // Sort by priority (1 = best), then by insertion order
+    matched.sort((a, b) => a.priority - b.priority);
+    result.outcomes = matched.slice(0, max).map(m => m.record);
   }
 
   return result;

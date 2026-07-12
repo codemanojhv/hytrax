@@ -11,8 +11,10 @@ max_results = 10
 promotion_threshold = 3
 `;
 
-const EMPTY_OKF = `---
-id: welcome
+const KNOWLEDGE_SUBDIRS = ['architecture', 'constraints', 'patterns', 'workflows'];
+
+const SAMPLE_ARCHITECTURE = `---
+id: arc-01
 type: architecture
 title: Project Overview
 summary: "Add a brief summary of your project architecture here."
@@ -44,17 +46,27 @@ export function scaffoldHytrax(projectRoot: string): string[] {
     return ['exists'];
   }
 
-  // Create directories
-  mkdirSync(join(hytraxDir, 'knowledge'), { recursive: true });
+  // Create outcomes directory
   mkdirSync(join(hytraxDir, 'outcomes'), { recursive: true });
+  created.push('.hytrax/outcomes/');
+
+  // Create knowledge subdirectories
+  for (const subdir of KNOWLEDGE_SUBDIRS) {
+    mkdirSync(join(hytraxDir, 'knowledge', subdir), { recursive: true });
+    created.push(`.hytrax/knowledge/${subdir}/`);
+  }
 
   // Create config
   writeFileSync(join(hytraxDir, 'config.toml'), DEFAULT_CONFIG, 'utf-8');
   created.push('.hytrax/config.toml');
 
-  // Create sample knowledge file
-  writeFileSync(join(hytraxDir, 'knowledge', 'architecture.okf'), EMPTY_OKF, 'utf-8');
-  created.push('.hytrax/knowledge/architecture.okf');
+  // Create sample architecture file
+  writeFileSync(
+    join(hytraxDir, 'knowledge', 'architecture', 'overview.okf'),
+    SAMPLE_ARCHITECTURE,
+    'utf-8',
+  );
+  created.push('.hytrax/knowledge/architecture/overview.okf');
 
   // Create empty outcomes file
   writeFileSync(join(hytraxDir, 'outcomes', 'outcomes.jsonl'), '', 'utf-8');

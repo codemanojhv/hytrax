@@ -1,15 +1,10 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import type { OKFDocument, OKFMetadata, OKFType, OKFStatus } from './types.js';
 
-/**
- * Parse an .okf file (Markdown with YAML frontmatter).
- */
 export function parseOKF(filePath: string): OKFDocument | null {
   try {
     const content = readFileSync(filePath, 'utf-8');
-
-    // Extract frontmatter between --- markers
     const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
     if (!match) return null;
 
@@ -33,22 +28,42 @@ export function parseOKF(filePath: string): OKFDocument | null {
 }
 
 /**
- * Load all OKF files from a directory.
+ * Recursively scan a directory for all .okf files.
+ * Supports: knowledge/architecture/*.okf, knowledge/constraints/*.okf, etc.
  */
-export function loadAllOKF(knowledgeDir: string): OKFDocument[] {
+function scanOKFFiles(dir: string): string[] {
   try {
-    const files = readdirSync(knowledgeDir).filter(f => f.endsWith('.okf'));
-    return files
-      .map(f => parseOKF(join(knowledgeDir, f)))
-      .filter((d): d is OKFDocument => d !== null);
+    const entries = readdirSync(dir);
+    const files: string[] = [];
+
+    for (const entry of entries) {
+      const fullPath = join(dir, entry);
+      const stat = statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        // Recurse into subdirectories
+        files.push(...scanOKFFiles(fullPath));
+      } else if (entry.endsWith('.okf')) {
+        files.push(fullPath);
+      }
+    }
+
+    return files;
   } catch {
     return [];
   }
 }
 
 /**
- * Simple YAML block parser (handles frontmatter only).
+ * Load all OKF files from a directory tree.
  */
+export function loadAllOKF(knowledgeDir: string): OKFDocument[] {
+  const files = scanOKFFiles(knowledgeDir);
+  return files
+    .map(f => parseOKF(f))
+    .filter((d): d is OKFDocument => d !== null);
+}
+
 function parseYamlBlock(block: string): Record<string, any> {
   const result: Record<string, any> = {};
   let currentKey: string | null = null;
@@ -57,23 +72,18 @@ function parseYamlBlock(block: string): Record<string, any> {
   for (const line of block.split('\n')) {
     const trimmed = line.trim();
 
-    // Array item
     if (trimmed.startsWith('- ')) {
       currentArray.push(trimmed.slice(2).trim());
-      if (currentKey) {
-        result[currentKey] = [...currentArray];
-      }
+      if (currentKey) result[currentKey] = [...currentArray];
       continue;
     }
 
-    // Flush array if we hit a new key
     if (currentArray.length > 0 && currentKey && trimmed.includes(':')) {
       result[currentKey] = currentArray;
       currentArray = [];
       currentKey = null;
     }
 
-    // Key: value
     const kvMatch = trimmed.match(/^(\w+):\s*(.*)$/);
     if (kvMatch) {
       currentKey = kvMatch[1];
@@ -83,7 +93,6 @@ function parseYamlBlock(block: string): Record<string, any> {
     }
   }
 
-  // Flush remaining array
   if (currentArray.length > 0 && currentKey) {
     result[currentKey] = currentArray;
   }
