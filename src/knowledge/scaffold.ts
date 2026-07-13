@@ -46,15 +46,17 @@ export function scaffoldOKF(knowledgeDir: string, type: OKFType, title: string):
   const fileName = `${slug}.okf`;
   const filePath = join(targetDir, fileName);
 
+  const now = new Date().toISOString();
   const content = `---
 id: ${id}
 type: ${type}
 title: ${title}
-summary: ""
+description: ""
 tags:
   - ${type}
 files: []
 status: active
+timestamp: ${now}
 ---
 
 # ${title}

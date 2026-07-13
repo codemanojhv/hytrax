@@ -19,7 +19,7 @@ describe('OKF Parser', () => {
 id: test-01
 type: architecture
 title: Test
-summary: A test object
+description: A test object
 tags:
   - test
   - demo

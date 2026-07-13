@@ -19,7 +19,7 @@ function setupTestDir() {
 id: arc-01
 type: architecture
 title: Design System
-summary: Tailwind-based design system with shared components
+description: Tailwind-based design system with shared components
 tags:
   - frontend
   - ui
@@ -35,7 +35,7 @@ Description`);
 id: arc-02
 type: architecture
 title: Authentication
-summary: Supabase Auth with RLS policies
+description: Supabase Auth with RLS policies
 tags:
   - auth
   - security
@@ -52,7 +52,7 @@ Description`);
 id: con-01
 type: constraint
 title: Tailwind Only
-summary: Must use Tailwind CSS, no other CSS frameworks
+description: Must use Tailwind CSS, no other CSS frameworks
 tags:
   - frontend
   - constraint
@@ -67,7 +67,7 @@ Constraint detail`);
 id: cvn-01
 type: convention
 title: Landing Page Pattern
-summary: Hero section followed by Features grid and CTA
+description: Hero section followed by Features grid and CTA
 tags:
   - frontend
   - landing-page

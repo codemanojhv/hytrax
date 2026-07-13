@@ -6,7 +6,7 @@ const mockDoc = (overrides: Partial<OKFDocument['metadata']> = {}): OKFDocument 
     id: 'arc-01',
     type: 'architecture',
     title: 'Design System',
-    summary: 'UI component library',
+    description: 'UI component library',
     tags: ['frontend', 'ui'],
     files: ['components/'],
     status: 'active',

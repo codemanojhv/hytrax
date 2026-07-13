@@ -13,12 +13,14 @@ export function parseOKF(filePath: string): OKFDocument | null {
 
     const metadata: OKFMetadata = {
       id: frontmatter.id ?? basename(filePath).replace('.okf', ''),
-      type: (frontmatter.type as OKFType) ?? 'architecture',
+      type: frontmatter.type ?? 'architecture',
       title: frontmatter.title ?? basename(filePath).replace('.okf', ''),
-      summary: frontmatter.summary ?? '',
+      description: frontmatter.description ?? frontmatter.summary ?? '',
+      resource: frontmatter.resource || undefined,
       tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : [],
       files: Array.isArray(frontmatter.files) ? frontmatter.files : [],
       status: (frontmatter.status as OKFStatus) ?? 'active',
+      timestamp: frontmatter.timestamp || undefined,
     };
 
     return { metadata, body, filePath };

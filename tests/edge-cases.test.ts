@@ -68,7 +68,7 @@ status: active`, 'utf-8');
 id: test-min
 type: architecture
 title: Minimal
-summary: "Minimal test"
+description: "Minimal test"
 tags: []
 files: []
 status: active
@@ -81,13 +81,14 @@ Body`, 'utf-8');
     expect(result!.body).toBe('Body');
   });
 
-  it('should handle missing summary field', async () => {
+  it('should fall back to legacy summary field when description is missing', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(constrDir, 'no-summary.okf');
+    const filePath = join(constrDir, 'legacy-summary.okf');
     writeFileSync(filePath, `---
 id: con-nosum
 type: constraint
-title: No Summary
+title: Legacy Summary
+summary: "Old-style summary field"
 tags: []
 files: []
 status: active
@@ -95,7 +96,7 @@ status: active
 Body`, 'utf-8');
     const result = parseOKF(filePath);
     expect(result).not.toBeNull();
-    expect(result!.metadata.summary || '').toBe('');
+    expect(result!.metadata.description).toBe('Old-style summary field');
   });
 
   it('should load nothing from empty knowledge directory', async () => {

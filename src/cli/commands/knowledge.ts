@@ -31,7 +31,7 @@ export function knowledgeCommand(): Command {
       const filePath = scaffoldOKF(knowledgeDir, type as OKFType, opts.title);
 
       console.log(`Created: ${filePath}`);
-      console.log('Fill in the details (summary, tags, files, body).');
+      console.log('Fill in the details (description, tags, files, body).');
     });
 
   return cmd;

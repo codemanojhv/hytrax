@@ -17,11 +17,12 @@ const SAMPLE_ARCHITECTURE = `---
 id: arc-01
 type: architecture
 title: Project Overview
-summary: "Add a brief summary of your project architecture here."
+description: "Add a brief description of your project architecture here."
 tags:
   - architecture
 files: []
 status: active
+timestamp: ${new Date().toISOString()}
 ---
 
 # Project Overview
@@ -42,13 +43,14 @@ const STARTER_WORKFLOW = `---
 id: wf-01
 type: workflow
 title: Hytrax Knowledge Loop
-summary: "Before writing any code, run hytrax plan, then search, then record after."
+description: "Before writing any code, run hytrax plan, then search, then record after."
 tags:
   - workflow
   - hytrax
   - mandatory
 files: []
 status: active
+timestamp: ${new Date().toISOString()}
 ---
 
 # Hytrax Knowledge Loop
@@ -69,13 +71,14 @@ const STARTER_CONSTRAINT = `---
 id: con-01
 type: constraint
 title: Hytrax first, code second
-summary: "Run hytrax plan before writing any code. Every time."
+description: "Run hytrax plan before writing any code. Every time."
 tags:
   - hytrax
   - constraint
   - mandatory
 files: []
 status: active
+timestamp: ${new Date().toISOString()}
 ---
 
 Never write code without first running:

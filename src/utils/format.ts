@@ -9,7 +9,7 @@ export function formatSearchYaml(results: { knowledge: OKFDocument[]; outcomes: 
       lines.push(`  - id: ${doc.metadata.id}`);
       lines.push(`    type: ${doc.metadata.type}`);
       lines.push(`    title: ${doc.metadata.title}`);
-      lines.push(`    summary: ${doc.metadata.summary}`);
+      lines.push(`    description: ${doc.metadata.description}`);
       lines.push(`    tags: [${doc.metadata.tags.join(', ')}]`);
       lines.push(`    status: ${doc.metadata.status}`);
     }

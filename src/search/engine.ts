@@ -58,8 +58,8 @@ function getKnowledgePriority(doc: OKFDocument, tokens: string[]): MatchPriority
   // Priority 3: Filename match
   if (anyFilenameMatch(tokens, doc.filePath)) return 3;
 
-  // Priority 4: Summary match (weakest signal)
-  if (anyWordMatch(tokens, doc.metadata.summary)) return 4;
+  // Priority 4: Description match (weakest signal)
+  if (anyWordMatch(tokens, doc.metadata.description)) return 4;
 
   return null;
 }
