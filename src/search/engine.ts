@@ -89,6 +89,7 @@ export function search(
     includeKnowledge?: boolean;
     includeOutcomes?: boolean;
     filterType?: string;
+    includeInactive?: boolean;
   },
 ): SearchResult {
   const tokens = tokenize(query);
@@ -101,9 +102,9 @@ export function search(
 
   if (includeKnowledge) {
     const allKnowledge = loadKnowledge(hytraxRoot);
-    const filtered = filterType
+    const filtered = (filterType
       ? allKnowledge.filter(d => d.metadata.type === filterType)
-      : allKnowledge;
+      : allKnowledge).filter(d => opts?.includeInactive || d.metadata.status === 'active');
 
     const matched: KnowledgeMatch[] = [];
 

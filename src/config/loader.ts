@@ -7,7 +7,6 @@ import { findHytraxRoot } from '../utils/paths.js';
 const DEFAULT_CONFIG: HytraxConfig = {
   project: { name: 'my-project' },
   search: { max_results: 10 },
-  record: { promotion_threshold: 3 },
 };
 
 export function loadConfig(cwd?: string): HytraxConfig {
@@ -27,9 +26,6 @@ export function loadConfig(cwd?: string): HytraxConfig {
       },
       search: {
         max_results: parsed.search?.max_results ?? DEFAULT_CONFIG.search.max_results,
-      },
-      record: {
-        promotion_threshold: parsed.record?.promotion_threshold ?? DEFAULT_CONFIG.record.promotion_threshold,
       },
     };
   } catch {

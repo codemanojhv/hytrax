@@ -58,6 +58,13 @@ Just structured files and a CLI.
 
 Hytrax **owns the data**. The host agent's LLM **owns the intelligence**.
 
+### Automation
+
+For agents with lifecycle hooks, run `npx hytrax plan --auto` at session start and
+`npx hytrax record --auto` at session end. The latter runs the project's `build`,
+then optional `lint` and `test` scripts. It records verification only; use the
+normal `record --task "..."` command when a failure should become project knowledge.
+
 ### The Loop (mandatory)
 
 1. **Plan** — `npx hytrax plan "<task description>"`
@@ -107,7 +114,8 @@ Legacy `summary` field still parsed as fallback for backward compatibility.
 | `hytrax init` | Create `.hytrax/` in your project with starter knowledge |
 | `hytrax plan "task"` | Orchestrate searches → produce compressed execution manifest |
 | `hytrax search "query"` | Find relevant knowledge + outcomes by tag/keyword |
-| `hytrax record --build passed` | Record a task outcome (append-only JSONL) |
+| `hytrax record --build passed` | Record a task outcome; generated constraints retire when superseded |
+| `hytrax record --auto` | Run available package verification scripts and record the result |
 | `hytrax query "query"` | Human-readable table view of search results |
 | `hytrax validate` | Check `.hytrax/` integrity (duplicate IDs, missing fields) |
 | `hytrax stats` | Outcome statistics (acceptance rate, failure rate by area) |
@@ -227,11 +235,11 @@ Tags win because humans are better at categorization than LLMs are at writing.
 | failed | (any) | FAILED | Verification failed |
 | passed | passed | REJECTED | (user-feedback) |
 
-When `user-feedback` is provided, it becomes the reason regardless of success.
+When `user-feedback` is provided, the outcome is `REJECTED` regardless of verification.
 
 When an ACCEPTED outcome is recorded and a related FAILED outcome exists
 (same task, ≥30% keyword overlap), the old failure is **auto-superseded** —
-it stops appearing in `plan`'s `avoid:` section. Stats tracks both counts.
+it stops appearing in `plan`'s `avoid:` section. Stats tracks both counts, and its generated constraint is marked `superseded` so future plans stop showing it.
 
 ### Knowledge Types
 

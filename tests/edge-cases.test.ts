@@ -185,10 +185,11 @@ describe('Outcome writer — edge cases', () => {
     expect(record.reason).toBeTruthy();
   });
 
-  it('should prefer user-feedback as reason', async () => {
+  it('should reject user feedback even when verification passed', async () => {
     const { writeOutcome } = await import('../src/outcomes/writer.js');
     const facts = { build: 'passed' as const, 'user-feedback': 'Client rejected it' as string };
     const record = writeOutcome(outcomesFile, facts);
+    expect(record.status).toBe('REJECTED');
     expect(record.reason).toBe('Client rejected it');
   });
 

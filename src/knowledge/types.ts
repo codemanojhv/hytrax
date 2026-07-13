@@ -83,5 +83,4 @@ export interface SearchResult {
 export interface HytraxConfig {
   project: { name: string };
   search: { max_results: number };
-  record: { promotion_threshold: number };
 }

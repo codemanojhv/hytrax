@@ -50,4 +50,18 @@ describe('Outcome writer', () => {
     const record = writeOutcome(outcomesFile, facts);
     expect(record.status).toBe('FAILED');
   });
+
+  it('should supersede a generated constraint when the task succeeds', async () => {
+    const { mkdirSync, writeFileSync, readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const constraintDir = join(testDir, '..', 'knowledge', 'constraints');
+    mkdirSync(constraintDir, { recursive: true });
+    writeFileSync(join(constraintDir, 'avoid.md'), '---\nid: con-004\nstatus: active\n---\n', 'utf8');
+    writeFileSync(outcomesFile, JSON.stringify({ id: 'out-004', task: 'Add account settings page', status: 'FAILED', files: [], timestamp: '', verification: { build: false } }) + '\n', 'utf8');
+
+    const { writeOutcome } = await import('../src/outcomes/writer.js');
+    writeOutcome(outcomesFile, { build: 'passed', task: 'Add account settings page' });
+
+    expect(readFileSync(join(constraintDir, 'avoid.md'), 'utf8')).toContain('status: superseded');
+  });
 });

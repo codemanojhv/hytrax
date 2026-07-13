@@ -5,8 +5,13 @@ import { findHytraxRoot } from '../../utils/paths.js';
 export function planCommand(): Command {
   return new Command('plan')
     .description('Prepare execution environment for a task (orchestrates multiple searches)')
-    .argument('<task>', 'Task description')
-    .action((task: string) => {
+    .argument('[task]', 'Task description')
+    .option('--auto', 'Emit session-start constraints without a task')
+    .action((task: string | undefined, opts: { auto?: boolean }) => {
+      if (!task && !opts.auto) {
+        console.error('Provide a task, or use --auto for session-start context.');
+        process.exit(1);
+      }
       const root = findHytraxRoot();
       if (!root) {
         console.error('No .hytrax/ found. Run: npx hytrax init');
@@ -14,7 +19,8 @@ export function planCommand(): Command {
       }
 
       // Extract primary keywords from task
-      const keywords = task
+      const contextTask = task ?? 'session context';
+      const keywords = contextTask
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, '')
         .split(/\s+/)
@@ -23,7 +29,7 @@ export function planCommand(): Command {
         .slice(0, 5)
         .join(' ');
 
-      console.error(`[hytrax] Planning: ${task}`);
+      console.error(`[hytrax] Planning: ${contextTask}`);
 
       // Search knowledge
       const knowledgeResults = search(root, keywords, {
@@ -49,7 +55,7 @@ export function planCommand(): Command {
 
       // Compress into manifest — pure YAML, noise-free
       const lines: string[] = [];
-      lines.push(`task: ${task}`);
+      lines.push(`task: ${contextTask}`);
 
       // Related knowledge (architecture, conventions, workflows)
       if (knowledgeResults.knowledge.length > 0) {

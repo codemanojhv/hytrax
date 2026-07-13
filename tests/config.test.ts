@@ -23,7 +23,6 @@ describe('Config loader', () => {
     const config = loadConfig(join(tmpdir(), 'nonexistent-dir-for-hytrax'));
     expect(config.project.name).toBe('my-project');
     expect(config.search.max_results).toBe(10);
-    expect(config.record.promotion_threshold).toBe(3);
   });
 
   it('should return defaults when config.toml is missing', async () => {
@@ -32,7 +31,6 @@ describe('Config loader', () => {
     const config = loadConfig(testDir);
     expect(config.project.name).toBe('my-project');
     expect(config.search.max_results).toBe(10);
-    expect(config.record.promotion_threshold).toBe(3);
   });
 
   it('should return defaults when config.toml is corrupt', async () => {
@@ -50,13 +48,10 @@ name = "my-app"
 [search]
 max_results = 25
 
-[record]
-promotion_threshold = 5
 `, 'utf-8');
     const config = loadConfig(testDir);
     expect(config.project.name).toBe('my-app');
     expect(config.search.max_results).toBe(25);
-    expect(config.record.promotion_threshold).toBe(5);
   });
 
   it('should merge partial config with defaults', async () => {
@@ -67,6 +62,5 @@ name = "partial-app"
     const config = loadConfig(testDir);
     expect(config.project.name).toBe('partial-app');
     expect(config.search.max_results).toBe(10); // default
-    expect(config.record.promotion_threshold).toBe(3); // default
   });
 });

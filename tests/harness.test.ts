@@ -176,8 +176,6 @@ name = "harness-validation"
 [search]
 max_results = 10
 
-[record]
-promotion_threshold = 3
 `, 'utf-8');
 
     seedKnowledge();

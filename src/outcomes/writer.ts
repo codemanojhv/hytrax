@@ -1,11 +1,12 @@
-import { appendFileSync, mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { appendFileSync, mkdirSync, existsSync, writeFileSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import type { OutcomeRecord, OutcomeFacts, OutcomeStatus } from '../knowledge/types.js';
 
 /**
  * Determine outcome from raw facts.
  */
 export function determineOutcome(facts: OutcomeFacts): OutcomeStatus {
+  if (facts['user-feedback']) return 'REJECTED';
   if (facts.build === 'failed') return 'FAILED';
   if (facts.lint === 'failed') return 'FAILED';
   if (facts.build === 'passed' && facts.lint === 'passed') return 'ACCEPTED';
@@ -61,18 +62,20 @@ function readAllOutcomes(outcomesFile: string): OutcomeRecord[] {
 function supersedeRelated(
   outcomesFile: string,
   newRecord: OutcomeRecord,
-): void {
-  if (newRecord.status !== 'ACCEPTED' && newRecord.status !== 'VERIFIED') return;
-  if (!newRecord.task || newRecord.task === 'unknown task') return;
+): string[] {
+  if (newRecord.status !== 'ACCEPTED' && newRecord.status !== 'VERIFIED') return [];
+  if (!newRecord.task || newRecord.task === 'unknown task') return [];
 
   const allOutcomes = readAllOutcomes(outcomesFile);
   let modified = false;
+  const supersededIds: string[] = [];
 
   const updated = allOutcomes.map(o => {
     if ((o.status === 'FAILED' || o.status === 'REJECTED') && o.id !== newRecord.id) {
       const overlap = tokenOverlap(o.task || '', newRecord.task || '');
       if (overlap >= 0.3) {
         modified = true;
+        supersededIds.push(o.id);
         return { ...o, status: 'SUPERSEDED' as OutcomeStatus, reason: `Superseded by ${newRecord.id}: ${newRecord.task}` };
       }
     }
@@ -83,6 +86,27 @@ function supersedeRelated(
     const lines = updated.map(o => JSON.stringify(o)).join('\n') + '\n';
     writeFileSync(outcomesFile, lines, 'utf-8');
   }
+  return supersededIds;
+}
+
+function supersedeGeneratedConstraints(outcomesFile: string, outcomeIds: string[]): void {
+  if (outcomeIds.length === 0) return;
+  const knowledgeDir = join(dirname(dirname(outcomesFile)), 'knowledge');
+  const constraintIds = new Set(outcomeIds.map(id => id.replace('out-', 'con-')));
+  const visit = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const filePath = join(dir, entry.name);
+      if (entry.isDirectory()) visit(filePath);
+      else if (/\.(md|okf)$/i.test(entry.name)) {
+        const content = readFileSync(filePath, 'utf8');
+        const id = content.match(/^id:\s*(\S+)$/m)?.[1];
+        if (id && constraintIds.has(id)) {
+          writeFileSync(filePath, content.replace(/^status:\s*active$/m, 'status: superseded'), 'utf8');
+        }
+      }
+    }
+  };
+  try { visit(knowledgeDir); } catch { /* Knowledge is optional. */ }
 }
 
 /**
@@ -140,7 +164,7 @@ export function writeOutcome(
   appendFileSync(outcomesFile, JSON.stringify(record) + '\n', 'utf-8');
 
   // P4: Auto-supersede related failures when an approach succeeds
-  supersedeRelated(outcomesFile, record);
+  supersedeGeneratedConstraints(outcomesFile, supersedeRelated(outcomesFile, record));
 
   return record;
 }

@@ -6,9 +6,6 @@ name = "my-project"
 
 [search]
 max_results = 10
-
-[record]
-promotion_threshold = 3
 `;
 
 const KNOWLEDGE_SUBDIRS = ['architecture', 'constraints', 'patterns', 'workflows'];
