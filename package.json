@@ -8,7 +8,9 @@
     "hytrax": "dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
@@ -23,9 +25,26 @@
     "ai",
     "coding-agent",
     "project-knowledge",
-    "harness"
+    "harness",
+    "okf",
+    "open-knowledge-format",
+    "agent-memory",
+    "claude-code",
+    "codex",
+    "developer-tools",
+    "llm-context",
+    "deterministic"
   ],
   "license": "MIT",
+  "author": "codemanojhv (https://github.com/codemanojhv)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codemanojhv/hytrax.git"
+  },
+  "homepage": "https://github.com/codemanojhv/hytrax#readme",
+  "bugs": {
+    "url": "https://github.com/codemanojhv/hytrax/issues"
+  },
   "dependencies": {
     "commander": "^12.0.0",
     "smol-toml": "^1.3.0"
