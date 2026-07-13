@@ -73,7 +73,7 @@ Hytrax uses **Google's Open Knowledge Format v0.1** — an open standard for
 knowledge-as-markdown. This means your `.hytrax/` folder is portable and can be
 consumed by any OKF-compatible tool.
 
-Every knowledge file is a Markdown file with YAML frontmatter:
+Every knowledge file is a Markdown file (`.md`) with YAML frontmatter — Google's Open Knowledge Format v0.1:
 
 ```yaml
 ---
@@ -81,7 +81,9 @@ id: con-01
 type: constraint
 title: Tailwind Only
 description: "Must use Tailwind CSS, no other CSS frameworks"
-tags: [frontend, constraint]
+tags:
+  - frontend
+  - constraint
 files:
   - components/ui/
 status: active
@@ -127,20 +129,32 @@ npx hytrax record \
   --files "src/lib/auth.ts,src/middleware.ts"
 ```
 
+On failure, Hytrax **auto-creates a constraint file** with full context — no manual editing needed:
+
+```bash
+npx hytrax record --build failed --task "used prop drilling for shared state"
+
+# → Created .hytrax/knowledge/constraints/avoid-used-prop-drilling.md
+# → Fully populated with task, reason, and approach
+# → AI reads it immediately on next plan
+```
+
 ### Plan Command Output
 
-The `plan` command produces a compressed YAML manifest:
+The `plan` command produces a compressed YAML manifest with **what to avoid** and **what patterns worked**:
 
 ```yaml
-task: add user authentication
+task: add dark mode toggle
 knowledge:
   - Design System  (architecture)
   - Authentication  (architecture)
 avoid:
-  - Corporate layout, too formal  (REJECTED)
+  - inline styles don't work for theme toggles  (FAILED)
+patterns:
+  - applied dark:bg-gray-900 Tailwind class to body  (ACCEPTED)
 constraints:
   - Tailwind Only
-  - Hytrax first, code second
+  - No inline styles, use Tailwind classes
 verify:
   - build
   - lint
@@ -159,13 +173,13 @@ my-project/
 │   ├── config.toml              # CLI settings
 │   ├── knowledge/
 │   │   ├── architecture/        # System architecture + decisions
-│   │   │   └── overview.okf
-│   │   ├── constraints/         # Must-follow rules
-│   │   │   └── tailwind-only.okf
+│   │   │   └── overview.md
+│   │   ├── constraints/         # Must-follow rules + auto-generated avoids
+│   │   │   └── tailwind-only.md
 │   │   ├── patterns/            # Accepted conventions + features
-│   │   │   └── landing-page.okf
+│   │   │   └── landing-page.md
 │   │   └── workflows/           # Process workflows
-│   │       └── hytrax-loop.okf
+│   │       └── hytrax-loop.md
 │   └── outcomes/
 │       └── outcomes.jsonl        # Append-only record of past task results
 └── node_modules/
@@ -197,7 +211,7 @@ When you search, results are ordered by match priority:
 
 1. **Tag match** — query token appears in `tags` field (strongest signal)
 2. **Title match** — query token matches document title
-3. **Filename match** — query token matches `.okf` filename
+3. **Filename match** — query token matches `.md` filename
 4. **Description match** — query token matches description text (weakest signal)
 
 This is intentional. Tags are curated by humans. Content is written by AI.
@@ -214,6 +228,10 @@ Tags win because humans are better at categorization than LLMs are at writing.
 | passed | passed | REJECTED | (user-feedback) |
 
 When `user-feedback` is provided, it becomes the reason regardless of success.
+
+When an ACCEPTED outcome is recorded and a related FAILED outcome exists
+(same task, ≥30% keyword overlap), the old failure is **auto-superseded** —
+it stops appearing in `plan`'s `avoid:` section. Stats tracks both counts.
 
 ### Knowledge Types
 
@@ -238,19 +256,23 @@ These are conventions, not a closed enum. Add any type you want.
 # Install
 npm install -D hytrax
 
-# Initialize
+# Initialize — creates .hytrax/ with starter knowledge
 npx hytrax init
 
-# Add your first knowledge
-npx hytrax knowledge add --type constraint --title "Must use TypeScript"
-npx hytrax knowledge add --type architecture --title "Project Overview"
-
-# Edit the created .okf files with details
-# ...
-
-# Use it
+# Plan before any task — surfaces constraints, avoids, patterns
 npx hytrax plan "add a new feature"
+
+# Record after every task — on failure, auto-creates a constraint
+npx hytrax record --build passed --task "added dark mode toggle"
+npx hytrax record --build failed --task "used inline styles"
+# → Constraint auto-created: .hytrax/knowledge/constraints/avoid-used-inline-styles.md
+
+# Check project health
+npx hytrax validate
+npx hytrax stats
 ```
+
+**No manual file editing required.** The AI agent does everything through CLI commands.
 
 ---
 
