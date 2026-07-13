@@ -25,15 +25,14 @@ const TYPE_PREFIXES: Record<string, string> = {
 };
 
 /**
- * Determine the next available ID by scanning all .okf files in a directory
- * for existing IDs matching the given prefix. This handles files with arbitrary
- * filenames (e.g., "tailwind-only.okf" with id: con-01).
+ * Determine the next available ID by scanning all OKF files (.md or .okf)
+ * in a directory for existing IDs matching the given prefix.
  */
 function nextIdForPrefix(targetDir: string, prefix: string): string {
   if (!existsSync(targetDir)) return `${prefix}-01`;
 
   let maxNum = 0;
-  const files = readdirSync(targetDir).filter(f => f.endsWith('.okf'));
+  const files = readdirSync(targetDir).filter(f => f.endsWith('.md') || f.endsWith('.okf'));
 
   for (const file of files) {
     try {
@@ -72,7 +71,7 @@ export function scaffoldOKF(knowledgeDir: string, type: OKFType, title: string):
     .replace(/^-|-$/g, '')
     .slice(0, 40);
 
-  const fileName = `${slug}.okf`;
+  const fileName = `${slug}.md`;
   const filePath = join(targetDir, fileName);
 
   const now = new Date().toISOString();

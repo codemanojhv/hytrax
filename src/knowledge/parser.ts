@@ -11,10 +11,11 @@ export function parseOKF(filePath: string): OKFDocument | null {
     const frontmatter = parseYamlBlock(match[1]);
     const body = (match[2] ?? '').trim();
 
+    const baseName = basename(filePath).replace(/\.(md|okf)$/i, '');
     const metadata: OKFMetadata = {
-      id: frontmatter.id ?? basename(filePath).replace('.okf', ''),
+      id: frontmatter.id ?? baseName,
       type: frontmatter.type ?? 'architecture',
-      title: frontmatter.title ?? basename(filePath).replace('.okf', ''),
+      title: frontmatter.title ?? baseName,
       description: frontmatter.description ?? frontmatter.summary ?? '',
       resource: frontmatter.resource || undefined,
       tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : [],
@@ -30,8 +31,9 @@ export function parseOKF(filePath: string): OKFDocument | null {
 }
 
 /**
- * Recursively scan a directory for all .okf files.
- * Supports: knowledge/architecture/*.okf, knowledge/constraints/*.okf, etc.
+ * Recursively scan a directory for all knowledge files (.md or .okf).
+ * .md is the standard OKF extension (Google OKF v0.1).
+ * .okf is supported for backward compatibility with pre-v0.1 Hytrax files.
  */
 function scanOKFFiles(dir: string): string[] {
   try {
@@ -43,9 +45,8 @@ function scanOKFFiles(dir: string): string[] {
       const stat = statSync(fullPath);
 
       if (stat.isDirectory()) {
-        // Recurse into subdirectories
         files.push(...scanOKFFiles(fullPath));
-      } else if (entry.endsWith('.okf')) {
+      } else if (entry.endsWith('.md') || entry.endsWith('.okf')) {
         files.push(fullPath);
       }
     }

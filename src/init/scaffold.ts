@@ -113,26 +113,26 @@ export function scaffoldHytrax(projectRoot: string): string[] {
 
   // Create sample architecture file
   writeFileSync(
-    join(hytraxDir, 'knowledge', 'architecture', 'overview.okf'),
+    join(hytraxDir, 'knowledge', 'architecture', 'overview.md'),
     SAMPLE_ARCHITECTURE,
     'utf-8',
   );
-  created.push('.hytrax/knowledge/architecture/overview.okf');
+  created.push('.hytrax/knowledge/architecture/overview.md');
 
   // Create starter knowledge for the Hytrax loop itself
   writeFileSync(
-    join(hytraxDir, 'knowledge', 'workflows', 'hytrax-loop.okf'),
+    join(hytraxDir, 'knowledge', 'workflows', 'hytrax-loop.md'),
     STARTER_WORKFLOW,
     'utf-8',
   );
-  created.push('.hytrax/knowledge/workflows/hytrax-loop.okf');
+  created.push('.hytrax/knowledge/workflows/hytrax-loop.md');
 
   writeFileSync(
-    join(hytraxDir, 'knowledge', 'constraints', 'hytrax-first.okf'),
+    join(hytraxDir, 'knowledge', 'constraints', 'hytrax-first.md'),
     STARTER_CONSTRAINT,
     'utf-8',
   );
-  created.push('.hytrax/knowledge/constraints/hytrax-first.okf');
+  created.push('.hytrax/knowledge/constraints/hytrax-first.md');
 
   // Create empty outcomes file
   writeFileSync(join(hytraxDir, 'outcomes', 'outcomes.jsonl'), '', 'utf-8');

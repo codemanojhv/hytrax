@@ -25,7 +25,7 @@ describe('OKF Parser — edge cases', () => {
 
   it('should return null for empty file', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(archDir, 'empty.okf');
+    const filePath = join(archDir, 'empty.md');
     writeFileSync(filePath, '', 'utf-8');
     const result = parseOKF(filePath);
     expect(result).toBeNull();
@@ -33,7 +33,7 @@ describe('OKF Parser — edge cases', () => {
 
   it('should return null for file with no frontmatter', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(archDir, 'nofm.okf');
+    const filePath = join(archDir, 'nofm.md');
     writeFileSync(filePath, 'Just some text without frontmatter', 'utf-8');
     const result = parseOKF(filePath);
     expect(result).toBeNull();
@@ -41,7 +41,7 @@ describe('OKF Parser — edge cases', () => {
 
   it('should return null for file with unclosed frontmatter', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(archDir, 'unclosed.okf');
+    const filePath = join(archDir, 'unclosed.md');
     writeFileSync(filePath, `---
 id: test-01
 title: Unclosed
@@ -50,7 +50,7 @@ This has a closing but missing the opening
 Jk it's closed
 `);
     // Actually this one has proper structure. Let's test truly unclosed:
-    const filePath2 = join(archDir, 'truly-unclosed.okf');
+    const filePath2 = join(archDir, 'truly-unclosed.md');
     writeFileSync(filePath2, `---
 id: test-02
 title: Truly Unclosed
@@ -63,7 +63,7 @@ status: active`, 'utf-8');
 
   it('should parse valid OKF even without optional fields', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(archDir, 'minimal.okf');
+    const filePath = join(archDir, 'minimal.md');
     writeFileSync(filePath, `---
 id: test-min
 type: architecture
@@ -83,7 +83,7 @@ Body`, 'utf-8');
 
   it('should fall back to legacy summary field when description is missing', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(constrDir, 'legacy-summary.okf');
+    const filePath = join(constrDir, 'legacy-summary.md');
     writeFileSync(filePath, `---
 id: con-nosum
 type: constraint

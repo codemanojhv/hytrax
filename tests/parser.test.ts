@@ -14,7 +14,7 @@ describe('OKF Parser', () => {
 
   it('should parse valid OKF with frontmatter and body', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(testDir, 'architecture', 'test.okf');
+    const filePath = join(testDir, 'architecture', 'test.md');
     writeFileSync(filePath, `---
 id: test-01
 type: architecture
@@ -41,7 +41,7 @@ Body content here.`);
 
   it('should return null for malformed file', async () => {
     const { parseOKF } = await import('../src/knowledge/parser.js');
-    const filePath = join(testDir, 'bad.okf');
+    const filePath = join(testDir, 'bad.md');
     writeFileSync(filePath, 'No frontmatter here');
     const result = parseOKF(filePath);
     expect(result).toBeNull();

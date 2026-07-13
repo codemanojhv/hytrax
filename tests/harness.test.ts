@@ -74,56 +74,56 @@ Body content for ${defs.id}.
 }
 
 function seedKnowledge(): void {
-  writeOKF('architecture', 'design-system.okf', {
+  writeOKF('architecture', 'design-system.md', {
     id: 'arc-01', type: 'architecture',
     title: 'Design System',
     description: 'Tailwind-based design system with shared UI components',
     tags: ['frontend', 'ui', 'design'],
     files: ['src/components/ui/'],
   });
-  writeOKF('architecture', 'auth.okf', {
+  writeOKF('architecture', 'auth.md', {
     id: 'arc-02', type: 'architecture',
     title: 'Authentication',
     description: 'Supabase Auth with Row Level Security policies',
     tags: ['auth', 'security', 'backend'],
     files: ['src/middleware.ts'],
   });
-  writeOKF('constraints', 'tailwind-only.okf', {
+  writeOKF('constraints', 'tailwind-only.md', {
     id: 'con-01', type: 'constraint',
     title: 'Tailwind Only',
     description: 'Must use Tailwind CSS. No other CSS frameworks allowed.',
     tags: ['frontend', 'constraint', 'css'],
     files: [],
   });
-  writeOKF('constraints', 'typescript-only.okf', {
+  writeOKF('constraints', 'typescript-only.md', {
     id: 'con-02', type: 'constraint',
     title: 'TypeScript Required',
     description: 'All code must be written in TypeScript, not JavaScript.',
     tags: ['typescript', 'constraint', 'language'],
     files: [],
   });
-  writeOKF('constraints', 'hytrax-first.okf', {
+  writeOKF('constraints', 'hytrax-first.md', {
     id: 'con-03', type: 'constraint',
     title: 'Hytrax Before Code',
     description: 'Run hytrax plan before writing any code. Every time.',
     tags: ['hytrax', 'workflow', 'mandatory'],
     files: [],
   });
-  writeOKF('patterns', 'landing-page.okf', {
+  writeOKF('patterns', 'landing-page.md', {
     id: 'cvn-01', type: 'convention',
     title: 'Landing Page Pattern',
     description: 'Hero → Features → CTA layout. No carousels, no complex animations.',
     tags: ['frontend', 'landing-page', 'convention'],
     files: [],
   });
-  writeOKF('patterns', 'api-route.okf', {
+  writeOKF('patterns', 'api-route.md', {
     id: 'cvn-02', type: 'convention',
     title: 'API Route Pattern',
     description: 'App Router handlers with Zod validation and typed responses.',
     tags: ['backend', 'api', 'convention'],
     files: [],
   });
-  writeOKF('workflows', 'hytrax-loop.okf', {
+  writeOKF('workflows', 'hytrax-loop.md', {
     id: 'wf-01', type: 'workflow',
     title: 'Hytrax Knowledge Loop',
     description: 'plan → search → code → record. Always. No exceptions.',
@@ -261,7 +261,7 @@ promotion_threshold = 3
     it('should match by title (priority 2)', () => {
       const { stdout } = run('search "Authentication"');
 
-      // auth.okf has title "Authentication"
+      // auth.md has title "Authentication"
       expect(stdout).toContain('Authentication');
       expect(stdout).toContain('arc-02');
     });
@@ -269,7 +269,7 @@ promotion_threshold = 3
     it('should match by description (priority 4)', () => {
       const { stdout } = run('search "Row Level Security"');
 
-      // auth.okf description contains "Row Level Security"
+      // auth.md description contains "Row Level Security"
       expect(stdout).toContain('Authentication');
     });
 
@@ -415,7 +415,7 @@ promotion_threshold = 3
 
     it('should detect duplicate IDs', () => {
       // Inject a duplicate ID (arc-01 already exists)
-      writeOKF('architecture', 'duplicate.okf', {
+      writeOKF('architecture', 'duplicate.md', {
         id: 'arc-01', type: 'architecture',
         title: 'Duplicate',
         description: 'Deliberate duplicate for testing',
@@ -429,7 +429,7 @@ promotion_threshold = 3
       expect(stderr + stdout).toContain('Duplicate ID');
 
       // Clean up
-      rmSync(knowledgeDir('architecture', 'duplicate.okf'), { force: true });
+      rmSync(knowledgeDir('architecture', 'duplicate.md'), { force: true });
     });
   });
 });

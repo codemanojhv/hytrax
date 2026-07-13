@@ -13,7 +13,7 @@ const mockDoc = (overrides: Partial<OKFDocument['metadata']> = {}): OKFDocument 
     ...overrides,
   },
   body: 'Body text',
-  filePath: '/fake/path.okf',
+  filePath: '/fake/path.md',
 });
 
 const mockOutcome = (overrides: Partial<OutcomeRecord> = {}): OutcomeRecord => ({

@@ -15,7 +15,7 @@ function setupTestDir() {
   mkdirSync(join(testDir, '.hytrax', 'outcomes'), { recursive: true });
 
   // Architecture
-  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'architecture', 'design-system.okf'), `---
+  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'architecture', 'design-system.md'), `---
 id: arc-01
 type: architecture
 title: Design System
@@ -31,7 +31,7 @@ status: active
 
 Description`);
 
-  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'architecture', 'auth.okf'), `---
+  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'architecture', 'auth.md'), `---
 id: arc-02
 type: architecture
 title: Authentication
@@ -48,7 +48,7 @@ status: active
 Description`);
 
   // Constraints
-  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'constraints', 'tailwind-only.okf'), `---
+  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'constraints', 'tailwind-only.md'), `---
 id: con-01
 type: constraint
 title: Tailwind Only
@@ -63,7 +63,7 @@ status: active
 Constraint detail`);
 
   // Patterns
-  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'patterns', 'landing-page.okf'), `---
+  writeFileSync(join(testDir, '.hytrax', 'knowledge', 'patterns', 'landing-page.md'), `---
 id: cvn-01
 type: convention
 title: Landing Page Pattern

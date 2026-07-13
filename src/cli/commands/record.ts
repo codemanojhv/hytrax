@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { writeFileSync } from 'node:fs';
 import { writeOutcome } from '../../outcomes/writer.js';
 import { findHytraxRoot, getKnowledgeDir } from '../../utils/paths.js';
 import { getOutcomesFile } from '../../utils/paths.js';
@@ -38,13 +39,43 @@ export function recordCommand(): Command {
       console.log(`Recorded: ${record.id}`);
       console.log(`Status: ${record.status}`);
 
-      // P1: On failure, auto-suggest a constraint draft
+      // P1: On failure, auto-create a fully populated constraint
       if (record.status === 'FAILED' || record.status === 'REJECTED') {
         const knowledgeDir = getKnowledgeDir(root);
         const title = `Avoid: ${record.task}`;
         try {
           const filePath = scaffoldOKF(knowledgeDir, 'constraint', title);
-          console.log(`Suggestion: Edit ${filePath} to document why this failed.`);
+          // Overwrite the draft with complete content
+          const description = record.reason && record.reason !== 'Verification failed'
+            ? record.reason
+            : `Never ${record.task.toLowerCase()}. This approach failed verification.`;
+          const files = record.files.length > 0
+            ? record.files.map(f => `  - ${f}`).join('\n')
+            : '  - (add related files)';
+          const body = record.approach
+            ? `## What failed\n\n${record.task}\n\n## Approach that failed\n\n${record.approach}\n\n## Why\n\n${description}`
+            : `## What failed\n\n${record.task}\n\n## Why\n\n${description}`;
+
+          const full = `---
+id: ${record.id.replace('out-', 'con-')}
+type: constraint
+title: ${title}
+description: "${description}"
+tags:
+  - constraint
+  - avoid
+files:
+${files}
+status: active
+timestamp: ${new Date().toISOString()}
+---
+
+# ${title}
+
+${body}
+`;
+          writeFileSync(filePath, full, 'utf-8');
+          console.log(`Constraint: ${filePath}`);
         } catch {
           // Non-fatal
         }
