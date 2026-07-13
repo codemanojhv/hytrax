@@ -7,7 +7,9 @@
   "bin": {
     "hytrax": "dist/index.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
@@ -16,7 +18,13 @@
     "test:watch": "vitest",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["hytrax", "ai", "coding-agent", "project-knowledge", "harness"],
+  "keywords": [
+    "hytrax",
+    "ai",
+    "coding-agent",
+    "project-knowledge",
+    "harness"
+  ],
   "license": "MIT",
   "dependencies": {
     "commander": "^12.0.0",
@@ -24,9 +32,12 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "hytrax": "^0.1.0-alpha.1",
     "tsx": "^4.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
   },
-  "engines": { "node": ">=20.0.0" }
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }
