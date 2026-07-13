@@ -90,8 +90,12 @@ function parseYamlBlock(block: string): Record<string, any> {
     const kvMatch = trimmed.match(/^(\w+):\s*(.*)$/);
     if (kvMatch) {
       currentKey = kvMatch[1];
-      const val = kvMatch[2].replace(/^"|"$/g, '').trim();
-      result[currentKey] = val || '';
+      const raw = kvMatch[2].trim();
+      const inlineArray = raw.match(/^\[(.*)\]$/);
+      const val = inlineArray
+        ? inlineArray[1].split(',').map(item => item.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean)
+        : raw.replace(/^['"]|['"]$/g, '');
+      result[currentKey] = val;
       currentArray = [];
     }
   }

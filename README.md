@@ -13,6 +13,13 @@ Hytrax has **no LLM of its own** — the host agent's LLM does all reasoning.
 It's a CLI tool that stores structured project knowledge as flat files in `.hytrax/`,
 committed to git and shared by every developer + CI on your team.
 
+## Where Hytrax Wins
+
+Hytrax is for teams that must review and enforce what an agent learns. Knowledge is
+plain Markdown in the pull request, inactive rules stop appearing in plans, and CI can
+run `npx hytrax validate --strict` to reject stale generated constraints or broken file
+links. It is deliberately not a semantic-search or autonomous-memory replacement.
+
 ---
 
 ## Why Hytrax Exists
@@ -112,12 +119,13 @@ Legacy `summary` field still parsed as fallback for backward compatibility.
 | Command | Purpose |
 |---------|---------|
 | `hytrax init` | Create `.hytrax/` in your project with starter knowledge |
+| `hytrax init --agent-instructions` | Add the workflow to `AGENTS.md` without replacing existing instructions |
 | `hytrax plan "task"` | Orchestrate searches → produce compressed execution manifest |
 | `hytrax search "query"` | Find relevant knowledge + outcomes by tag/keyword |
 | `hytrax record --build passed` | Record a task outcome; generated constraints retire when superseded |
 | `hytrax record --auto` | Run available package verification scripts and record the result |
 | `hytrax query "query"` | Human-readable table view of search results |
-| `hytrax validate` | Check `.hytrax/` integrity (duplicate IDs, missing fields) |
+| `hytrax validate --strict` | CI check for duplicate IDs, stale generated constraints, and broken links |
 | `hytrax stats` | Outcome statistics (acceptance rate, failure rate by area) |
 | `hytrax knowledge add --type X --title Y` | Scaffold a new OKF knowledge file |
 
@@ -195,6 +203,12 @@ my-project/
 ```
 
 **Commit this.** Share it with your team. CI runs `hytrax validate` to catch drift.
+
+For protected branches, use the stricter check:
+
+```bash
+npx hytrax validate --strict
+```
 
 ---
 

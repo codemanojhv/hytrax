@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execSync } from 'node:child_process';
-import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -69,8 +69,22 @@ describe('CLI integration', () => {
     expect(existsSync(join(testDir, '.hytrax', 'config.toml'))).toBe(true);
   });
 
+  it('should add Hytrax instructions without replacing AGENTS.md', () => {
+    writeFileSync(join(testDir, 'AGENTS.md'), '# Existing instructions\n');
+    const output = run('init --agent-instructions');
+    const instructions = readFileSync(join(testDir, 'AGENTS.md'), 'utf8');
+    expect(output).toContain('AGENTS.md: updated');
+    expect(instructions).toContain('Existing instructions');
+    expect(instructions).toContain('npx hytrax plan');
+  });
+
   it('should validate a clean project', () => {
     const output = run('validate');
+    expect(output).toContain('Valid');
+  });
+
+  it('should validate strict governance checks', () => {
+    const output = run('validate --strict');
     expect(output).toContain('Valid');
   });
 

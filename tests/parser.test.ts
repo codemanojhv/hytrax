@@ -47,6 +47,15 @@ Body content here.`);
     expect(result).toBeNull();
   });
 
+  it('should parse standard inline YAML arrays', async () => {
+    const { parseOKF } = await import('../src/knowledge/parser.js');
+    const filePath = join(testDir, 'architecture', 'inline.md');
+    writeFileSync(filePath, `---\ntype: architecture\ntags: [frontend, "team"]\nfiles: [src/app.ts]\n---\n`);
+    const result = parseOKF(filePath);
+    expect(result!.metadata.tags).toEqual(['frontend', 'team']);
+    expect(result!.metadata.files).toEqual(['src/app.ts']);
+  });
+
   it('should load all OKF from subdirectories recursively', async () => {
     const { loadAllOKF } = await import('../src/knowledge/parser.js');
     const results = loadAllOKF(testDir);

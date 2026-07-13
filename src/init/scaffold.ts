@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, appendFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DEFAULT_CONFIG = `[project]
@@ -85,6 +85,26 @@ npx hytrax plan "<what you're about to do>"
 
 This is not optional. Even if the knowledge directory is empty — that's a signal to backfill, not to skip.
 `;
+
+const AGENT_INSTRUCTIONS = `
+<!-- hytrax:start -->
+## Hytrax
+
+Before changing code, run \`npx hytrax plan "<task>"\` and follow its active constraints.
+After verification, run \`npx hytrax record --build passed|failed --task "<task>"\`.
+<!-- hytrax:end -->
+`;
+
+export function installAgentInstructions(projectRoot: string): 'created' | 'updated' | 'exists' {
+  const filePath = join(projectRoot, 'AGENTS.md');
+  if (!existsSync(filePath)) {
+    writeFileSync(filePath, AGENT_INSTRUCTIONS.trimStart(), 'utf8');
+    return 'created';
+  }
+  if (readFileSync(filePath, 'utf8').includes('<!-- hytrax:start -->')) return 'exists';
+  appendFileSync(filePath, AGENT_INSTRUCTIONS, 'utf8');
+  return 'updated';
+}
 
 export function scaffoldHytrax(projectRoot: string): string[] {
   const created: string[] = [];
