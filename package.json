@@ -1,6 +1,6 @@
 {
   "name": "hytrax",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Local, deterministic knowledge layer for AI coding agents. Makes your agent stop repeating mistakes.",
   "type": "module",
   "main": "./dist/index.js",
