@@ -6,6 +6,7 @@ export interface OutcomeStats {
   rejected: number;
   failed: number;
   verified: number;
+  superseded: number;
   acceptanceRate: string;
   failureRate: string;
   byArea: Record<string, { total: number; failed: number }>;
@@ -19,6 +20,7 @@ export function buildStats(outcomes: OutcomeRecord[]): OutcomeStats {
     rejected: 0,
     failed: 0,
     verified: 0,
+    superseded: 0,
     acceptanceRate: '0%',
     failureRate: '0%',
     byArea: {},
@@ -30,6 +32,7 @@ export function buildStats(outcomes: OutcomeRecord[]): OutcomeStats {
     else if (o.status === 'REJECTED') stats.rejected++;
     else if (o.status === 'FAILED') stats.failed++;
     else if (o.status === 'VERIFIED') stats.verified++;
+    else if (o.status === 'SUPERSEDED') stats.superseded++;
 
     if (o.area) {
       if (!stats.byArea[o.area]) stats.byArea[o.area] = { total: 0, failed: 0 };
@@ -45,9 +48,9 @@ export function buildStats(outcomes: OutcomeRecord[]): OutcomeStats {
     stats.failureRate = `${Math.round(((stats.failed + stats.rejected) / stats.total) * 100)}%`;
   }
 
-  // Recent failures (last 5)
+  // Recent failures (last 5) — exclude superseded
   stats.recentFailures = outcomes
-    .filter(o => o.status === 'FAILED' || o.status === 'REJECTED')
+    .filter(o => (o.status === 'FAILED' || o.status === 'REJECTED'))
     .slice(-5)
     .reverse();
 

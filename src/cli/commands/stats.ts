@@ -30,6 +30,7 @@ export function statsCommand(): Command {
       console.log(`  REJECTED:  ${stats.rejected}`);
       console.log(`  FAILED:    ${stats.failed}`);
       console.log(`  VERIFIED:  ${stats.verified}`);
+      console.log(`  SUPERSEDED: ${stats.superseded}`);
       console.log('');
       console.log(`Acceptance rate: ${stats.acceptanceRate}`);
       console.log(`Failure rate:    ${stats.failureRate}`);

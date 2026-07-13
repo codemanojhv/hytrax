@@ -1,7 +1,8 @@
 import { Command } from 'commander';
 import { writeOutcome } from '../../outcomes/writer.js';
-import { findHytraxRoot } from '../../utils/paths.js';
+import { findHytraxRoot, getKnowledgeDir } from '../../utils/paths.js';
 import { getOutcomesFile } from '../../utils/paths.js';
+import { scaffoldOKF } from '../../knowledge/scaffold.js';
 import type { OutcomeFacts } from '../../knowledge/types.js';
 
 export function recordCommand(): Command {
@@ -36,5 +37,22 @@ export function recordCommand(): Command {
 
       console.log(`Recorded: ${record.id}`);
       console.log(`Status: ${record.status}`);
+
+      // P1: On failure, auto-suggest a constraint draft
+      if (record.status === 'FAILED' || record.status === 'REJECTED') {
+        const knowledgeDir = getKnowledgeDir(root);
+        const title = `Avoid: ${record.task}`;
+        try {
+          const filePath = scaffoldOKF(knowledgeDir, 'constraint', title);
+          console.log(`Suggestion: Edit ${filePath} to document why this failed.`);
+        } catch {
+          // Non-fatal
+        }
+      }
+
+      // P4: On ACCEPTED, notify if related failures were superseded
+      if (record.status === 'ACCEPTED' && record.reason?.startsWith('Superseded')) {
+        console.log(`Note: Related failures auto-superseded.`);
+      }
     });
 }

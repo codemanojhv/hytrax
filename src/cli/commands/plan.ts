@@ -24,7 +24,6 @@ export function planCommand(): Command {
         .join(' ');
 
       console.error(`[hytrax] Planning: ${task}`);
-      console.error(`[hytrax] Keywords: ${keywords}`);
 
       // Search knowledge
       const knowledgeResults = search(root, keywords, {
@@ -33,25 +32,26 @@ export function planCommand(): Command {
         includeOutcomes: false,
       });
 
-      // Search outcomes for failures
+      // Search outcomes for patterns + failures
       const outcomeResults = search(root, keywords, {
-        max: 3,
+        max: 5,
         includeKnowledge: false,
         includeOutcomes: true,
       });
 
-      // Search for constraints
+      // Search for constraints (always fetched, regardless of task)
       const constraintResults = search(root, 'constraint', {
-        max: 5,
+        max: 10,
         includeKnowledge: true,
         includeOutcomes: false,
         filterType: 'constraint',
       });
 
-      // Compress into manifest
+      // Compress into manifest — pure YAML, noise-free
       const lines: string[] = [];
       lines.push(`task: ${task}`);
 
+      // Related knowledge (architecture, conventions, workflows)
       if (knowledgeResults.knowledge.length > 0) {
         lines.push('knowledge:');
         for (const doc of knowledgeResults.knowledge) {
@@ -59,18 +59,29 @@ export function planCommand(): Command {
         }
       }
 
-      if (outcomeResults.outcomes.length > 0) {
-        const failures = outcomeResults.outcomes.filter(
-          o => o.status === 'REJECTED' || o.status === 'FAILED',
-        );
-        if (failures.length > 0) {
-          lines.push('avoid:');
-          for (const o of failures) {
-            lines.push(`  - ${o.reason || o.task}  (${o.status})`);
-          }
+      // Things to avoid: FAILED or REJECTED outcomes (excluding SUPERSEDED)
+      const failures = outcomeResults.outcomes.filter(
+        o => (o.status === 'REJECTED' || o.status === 'FAILED'),
+      );
+      if (failures.length > 0) {
+        lines.push('avoid:');
+        for (const o of failures) {
+          lines.push(`  - ${o.reason || o.task}  (${o.status})`);
         }
       }
 
+      // Positive patterns: ACCEPTED or VERIFIED outcomes that worked
+      const patterns = outcomeResults.outcomes.filter(
+        o => (o.status === 'ACCEPTED' || o.status === 'VERIFIED'),
+      );
+      if (patterns.length > 0) {
+        lines.push('patterns:');
+        for (const o of patterns) {
+          lines.push(`  - ${o.approach || o.task}  (${o.status})`);
+        }
+      }
+
+      // Mandatory constraints
       if (constraintResults.knowledge.length > 0) {
         lines.push('constraints:');
         for (const doc of constraintResults.knowledge) {
@@ -78,10 +89,12 @@ export function planCommand(): Command {
         }
       }
 
+      // Standard verification steps
       lines.push('verify:');
       lines.push('  - build');
       lines.push('  - lint');
 
+      // All output to stdout — clean for AI consumption
       console.log(lines.join('\n'));
     });
 }
