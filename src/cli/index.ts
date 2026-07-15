@@ -11,6 +11,8 @@ import { queryCommand } from './commands/query.js';
 import { validateCommand } from './commands/validate.js';
 import { statsCommand } from './commands/stats.js';
 import { knowledgeCommand } from './commands/knowledge.js';
+import { handoffCommand } from './commands/handoff.js';
+import { resumeCommand } from './commands/resume.js';
 
 function getVersion(): string {
   try {
@@ -39,6 +41,8 @@ export function createCLI(): Command {
   program.addCommand(validateCommand());
   program.addCommand(statsCommand());
   program.addCommand(knowledgeCommand());
+  program.addCommand(handoffCommand());
+  program.addCommand(resumeCommand());
 
   return program;
 }

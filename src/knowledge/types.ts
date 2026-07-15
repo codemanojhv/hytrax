@@ -84,3 +84,19 @@ export interface HytraxConfig {
   project: { name: string };
   search: { max_results: number };
 }
+
+export type HandoffStatus = 'open' | 'completed' | 'superseded';
+
+export interface HandoffRecord {
+  id: string;
+  type: 'handoff';
+  status: HandoffStatus;
+  sourceAgent: string;
+  task: string;
+  parent?: string;
+  tags: string[];
+  files: string[];
+  createdAt: string;
+  body: string;
+  filePath: string;
+}

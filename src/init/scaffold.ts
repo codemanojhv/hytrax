@@ -90,7 +90,10 @@ const AGENT_INSTRUCTIONS = `
 <!-- hytrax:start -->
 ## Hytrax
 
-Before changing code, run \`npx hytrax plan "<task>"\` and follow its active constraints.
+Before changing code, run \`npx hytrax resume "<task>"\` and follow its active constraints.
+If no handoff exists, run \`npx hytrax plan "<task>"\`.
+At the end of a significant session, create a handoff from \`npx hytrax handoff template\`,
+then run \`npx hytrax handoff create --input HANDOFF.md\`.
 After verification, run \`npx hytrax record --build passed|failed --task "<task>"\`.
 <!-- hytrax:end -->
 `;
@@ -117,6 +120,9 @@ export function scaffoldHytrax(projectRoot: string): string[] {
   // Create outcomes directory
   mkdirSync(join(hytraxDir, 'outcomes'), { recursive: true });
   created.push('.hytrax/outcomes/');
+
+  mkdirSync(join(hytraxDir, 'context', 'handoffs'), { recursive: true });
+  created.push('.hytrax/context/handoffs/');
 
   // Create knowledge subdirectories
   for (const subdir of KNOWLEDGE_SUBDIRS) {

@@ -83,6 +83,18 @@ describe('CLI integration', () => {
     expect(output).toContain('Valid');
   });
 
+  it('should create and resume a portable handoff', () => {
+    const handoffPath = join(testDir, 'HANDOFF.md');
+    writeFileSync(handoffPath, `---\nid: hnd-new\ntype: handoff\nstatus: open\nsource_agent: claude-code\ntask: migrate auth\ncreated_at: 2026-07-15T00:00:00Z\ntags: [auth]\nfiles: []\n---\n\n# Goal\n\nMove auth to the shared session layer.\n\n# Next actions\n\n1. Run auth tests.\n`, 'utf8');
+    const created = run(`handoff create --input "${handoffPath}"`);
+    expect(created).toContain('Created: hnd-001');
+    const resumed = run('resume "migrate auth"');
+    expect(resumed).toContain('hnd-001');
+    expect(resumed).toContain('Move auth to the shared session layer.');
+    expect(run('handoff complete hnd-001')).toContain('completed');
+    expect(run('handoff list')).toContain('completed');
+  });
+
   it('should validate strict governance checks', () => {
     const output = run('validate --strict');
     expect(output).toContain('Valid');

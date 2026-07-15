@@ -29,3 +29,7 @@ export function getOutcomesFile(hytraxRoot: string): string {
 export function getConfigPath(hytraxRoot: string): string {
   return join(hytraxRoot, 'config.toml');
 }
+
+export function getHandoffsDir(hytraxRoot: string): string {
+  return join(hytraxRoot, 'context', 'handoffs');
+}

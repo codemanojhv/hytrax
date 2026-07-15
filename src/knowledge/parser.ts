@@ -67,7 +67,7 @@ export function loadAllOKF(knowledgeDir: string): OKFDocument[] {
     .filter((d): d is OKFDocument => d !== null);
 }
 
-function parseYamlBlock(block: string): Record<string, any> {
+export function parseYamlBlock(block: string): Record<string, any> {
   const result: Record<string, any> = {};
   let currentKey: string | null = null;
   let currentArray: string[] = [];

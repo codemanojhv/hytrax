@@ -20,6 +20,26 @@ plain Markdown in the pull request, inactive rules stop appearing in plans, and 
 run `npx hytrax validate --strict` to reject stale generated constraints or broken file
 links. It is deliberately not a semantic-search or autonomous-memory replacement.
 
+## Portable Context Handoffs
+
+When moving from Claude Code to Codex, save the current work as a portable handoff:
+
+```bash
+npx hytrax handoff template > HANDOFF.md
+# Have the current agent fill in Goal, Decisions, Risks, and Next actions.
+npx hytrax handoff create --input HANDOFF.md
+```
+
+Start the next agent with the bounded context manifest:
+
+```bash
+npx hytrax resume "finish the OAuth callback"
+```
+
+The resume output combines the best open handoff, active constraints, relevant
+knowledge, past outcomes, and verification steps. It is deterministic and capped by
+`--max-chars`, so an eight-hour transcript does not become an eight-hour prompt.
+
 ---
 
 ## Why Hytrax Exists
@@ -120,6 +140,11 @@ Legacy `summary` field still parsed as fallback for backward compatibility.
 |---------|---------|
 | `hytrax init` | Create `.hytrax/` in your project with starter knowledge |
 | `hytrax init --agent-instructions` | Add the workflow to `AGENTS.md` without replacing existing instructions |
+| `hytrax handoff template` | Print the provider-neutral session handoff template |
+| `hytrax handoff create --input HANDOFF.md` | Store a validated handoff in `.hytrax/context/handoffs/` |
+| `hytrax handoff list` | List open and completed handoffs |
+| `hytrax handoff validate --strict` | Validate handoff structure and linked files |
+| `hytrax resume "task"` | Assemble bounded context for the next agent |
 | `hytrax plan "task"` | Orchestrate searches → produce compressed execution manifest |
 | `hytrax search "query"` | Find relevant knowledge + outcomes by tag/keyword |
 | `hytrax record --build passed` | Record a task outcome; generated constraints retire when superseded |
