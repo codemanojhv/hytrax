@@ -9,6 +9,20 @@ npx hytrax init
 npx hytrax plan "add user authentication"
 ```
 
+## How to use
+
+1. Work normally with your AI agent.
+2. Before switching agents, ask: **“Use Hytrax and save the context.”**
+3. In the next agent, ask: **“Use Hytrax and continue.”**
+
+Setup once per project:
+
+```bash
+npx hytrax init --agent-instructions
+```
+
+That is all. The agent will use `hytrax resume` and create handoffs when you ask.
+
 Hytrax has **no LLM of its own** — the host agent's LLM does all reasoning.
 It's a CLI tool that stores structured project knowledge as flat files in `.hytrax/`,
 committed to git and shared by every developer + CI on your team.
