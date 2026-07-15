@@ -2,14 +2,16 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { parseYamlBlock } from '../knowledge/parser.js';
 import type { HandoffRecord, HandoffStatus } from '../knowledge/types.js';
+import { decodeText } from '../utils/text.js';
 
 export function parseHandoffContent(content: string, filePath = '<input>'): HandoffRecord | null {
-  const normalized = content.replace(/\r\n/g, '\n');
+  const normalized = content.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
   const match = normalized.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
   if (!match) return null;
   const fields = parseYamlBlock(match[1]);
   if (fields.type !== 'handoff') return null;
-  const id = String(fields.id || basename(filePath).replace(/\.md$/i, ''));
+  const parsedId = String(fields.id || '');
+  const id = parsedId || (filePath.startsWith('<') ? 'hnd-new' : basename(filePath).replace(/\.md$/i, ''));
   const status = String(fields.status || 'open') as HandoffStatus;
   return {
     id,
@@ -35,9 +37,23 @@ export function loadHandoffs(dir: string): HandoffRecord[] {
       else if (filePath.endsWith('.md')) files.push(filePath);
     }
     return files
-      .map(filePath => parseHandoffContent(readFileSync(filePath, 'utf8'), filePath))
+      .map(filePath => parseHandoffContent(decodeText(readFileSync(filePath)), filePath))
       .filter((handoff): handoff is HandoffRecord => handoff !== null)
       .sort((a, b) => a.id.localeCompare(b.id));
+  } catch {
+    return [];
+  }
+}
+
+export function listHandoffFiles(dir: string): string[] {
+  try {
+    const files: string[] = [];
+    for (const entry of readdirSync(dir).sort()) {
+      const filePath = join(dir, entry);
+      if (statSync(filePath).isDirectory()) files.push(...collectHandoffFiles(filePath));
+      else if (filePath.endsWith('.md')) files.push(filePath);
+    }
+    return files.sort();
   } catch {
     return [];
   }

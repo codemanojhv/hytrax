@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { findHytraxRoot, getHandoffsDir } from '../../utils/paths.js';
 import { findHandoff, createHandoff, updateHandoffStatus, validateHandoff } from '../../handoff/writer.js';
-import { loadHandoffs } from '../../handoff/parser.js';
+import { listHandoffFiles, loadHandoffs } from '../../handoff/parser.js';
+import { decodeText } from '../../utils/text.js';
 
 const TEMPLATE = `---
 id: hnd-new
@@ -11,7 +12,7 @@ type: handoff
 status: open
 source_agent: claude-code
 task: "Describe the work"
-created_at: 2026-07-15T00:00:00Z
+created_at: ${new Date().toISOString()}
 tags: [project]
 files: []
 ---
@@ -59,12 +60,18 @@ export function handoffCommand(): Command {
   cmd.command('template').description('Print a provider-neutral handoff template').action(() => console.log(TEMPLATE));
 
   cmd.command('create')
-    .description('Store a completed handoff Markdown file')
-    .requiredOption('--input <file>', 'Handoff Markdown file')
+    .description('Store a provider-neutral handoff from a file or stdin (Claude Code, Codex, OpenCode, or any agent)')
+    .option('--input <file>', 'Handoff Markdown file')
+    .option('--stdin', 'Read handoff Markdown from stdin')
     .option('--source-agent <agent>', 'Source agent when importing plain Markdown', 'external')
     .option('--task <task>', 'Override the task inferred from the Markdown heading')
-    .action((opts: { input: string; sourceAgent: string; task?: string }) => {
-      const handoff = createHandoff(rootOrExit(), readFileSync(opts.input, 'utf8'), { sourceAgent: opts.sourceAgent, task: opts.task });
+    .action((opts: { input?: string; stdin?: boolean; sourceAgent: string; task?: string }) => {
+      if ((opts.input ? 1 : 0) + (opts.stdin ? 1 : 0) !== 1) {
+        console.error('Choose exactly one of --input <file> or --stdin.');
+        process.exit(1);
+      }
+      const content = opts.stdin ? readFileSync(0, 'utf8') : decodeText(readFileSync(opts.input!));
+      const handoff = createHandoff(rootOrExit(), content, { sourceAgent: opts.sourceAgent, task: opts.task });
       console.log(`Created: ${handoff.id}`);
       console.log(`Stored: ${handoff.filePath}`);
     });
@@ -99,9 +106,12 @@ export function handoffCommand(): Command {
   cmd.command('validate').description('Validate all handoffs').option('--strict', 'Check linked files').action((opts: { strict?: boolean }) => {
     const root = rootOrExit();
     const projectRoot = dirname(root);
+    const files = listHandoffFiles(getHandoffsDir(root));
     const handoffs = loadHandoffs(getHandoffsDir(root));
     const ids = new Set<string>();
     const errors: string[] = [];
+    const parsedPaths = new Set(handoffs.map(handoff => handoff.filePath));
+    for (const file of files) if (!parsedPaths.has(file)) errors.push(`invalid frontmatter: ${file}`);
     for (const handoff of handoffs) {
       if (ids.has(handoff.id)) errors.push(`duplicate id: ${handoff.id}`);
       ids.add(handoff.id);

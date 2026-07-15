@@ -4,7 +4,7 @@
 **Makes your agent stop repeating the same mistakes.**
 
 ```bash
-npm install -D hytrax
+npm install -D hytrax@alpha
 npx hytrax init
 npx hytrax plan "add user authentication"
 ```
@@ -22,12 +22,15 @@ links. It is deliberately not a semantic-search or autonomous-memory replacement
 
 ## Portable Context Handoffs
 
-When moving from Claude Code to Codex, save the current work as a portable handoff:
+When moving between Claude Code, Codex, OpenCode, Cursor, Copilot, or any other
+agentic coding platform, save the current work as a portable handoff:
 
 ```bash
 npx hytrax handoff template > HANDOFF.md
 # Have the current agent fill in Goal, Decisions, Risks, and Next actions.
 npx hytrax handoff create --input HANDOFF.md
+# Or pipe a generated handoff directly:
+some-agent-command | npx hytrax handoff create --stdin --source-agent opencode
 ```
 
 Start the next agent with the bounded context manifest:
@@ -37,8 +40,8 @@ npx hytrax resume "finish the OAuth callback"
 ```
 
 The resume output combines the best open handoff, active constraints, relevant
-knowledge, past outcomes, and verification steps. It is deterministic and capped by
-`--max-chars`, so an eight-hour transcript does not become an eight-hour prompt.
+knowledge, past outcomes, and verification steps. It is deterministic, valid YAML,
+and capped by `--max-chars`, so an eight-hour transcript does not become an eight-hour prompt.
 
 ---
 
@@ -85,19 +88,37 @@ Just structured files and a CLI.
 
 Hytrax **owns the data**. The host agent's LLM **owns the intelligence**.
 
+### Agent skill
+
+`npx hytrax init` installs the provider-neutral skill at
+`.hytrax/skills/hytrax/SKILL.md`. It teaches agents when to invoke Hytrax without
+interrupting normal work: agents work normally, then respond to requests such as
+"use Hytrax", "save context", or "switch agents". A later agent resumes only when
+the user asks to continue previous work.
+
 ### Automation
 
-For agents with lifecycle hooks, run `npx hytrax plan --auto` at session start and
-`npx hytrax record --auto` at session end. The latter runs the project's `build`,
+For platforms with lifecycle hooks, run `npx hytrax resume "<task>"` at session start and
+`npx hytrax handoff create --stdin` at session end or before a context switch. You can
+install the same generated instructions into any platform's instruction file:
+
+```bash
+npx hytrax init --agent-instructions AGENTS.md   # Codex, OpenCode and compatible tools
+npx hytrax init --agent-instructions CLAUDE.md   # Claude Code
+```
+
+Run `npx hytrax record --auto` at session end when desired. It runs the project's `build`,
 then optional `lint` and `test` scripts. It records verification only; use the
 normal `record --task "..."` command when a failure should become project knowledge.
 
 ### The Loop (mandatory)
 
-1. **Plan** — `npx hytrax plan "<task description>"`
-2. **Search** — `npx hytrax search "<keywords>"`
-3. **Record** — `npx hytrax record --build passed --task "what I did"`
-4. **Add knowledge** — `npx hytrax knowledge add --type constraint --title "Must use Tailwind"`
+1. **Resume** — `npx hytrax resume "<task description>"`
+2. **Plan** — `npx hytrax plan "<task description>"` when no useful handoff exists
+3. **Work and verify** — use the host project's normal build, test, and lint commands
+4. **Handoff** — `npx hytrax handoff create --stdin` before pausing or switching agents
+5. **Record** — `npx hytrax record --build passed --task "what I did"`
+6. **Add knowledge** — `npx hytrax knowledge add --type constraint --title "Must use Tailwind"`
 
 ---
 
@@ -139,9 +160,11 @@ Legacy `summary` field still parsed as fallback for backward compatibility.
 | Command | Purpose |
 |---------|---------|
 | `hytrax init` | Create `.hytrax/` in your project with starter knowledge |
-| `hytrax init --agent-instructions` | Add the workflow to `AGENTS.md` without replacing existing instructions |
+| `hytrax init --agent-instructions [file]` | Add or update the workflow in any agent instruction file |
+| `hytrax init` | Install the project-local Hytrax agent skill |
 | `hytrax handoff template` | Print the provider-neutral session handoff template |
 | `hytrax handoff create --input HANDOFF.md` | Store a validated handoff in `.hytrax/context/handoffs/` |
+| `hytrax handoff create --stdin` | Store handoff Markdown piped from any agent or hook |
 | `hytrax handoff list` | List open and completed handoffs |
 | `hytrax handoff validate --strict` | Validate handoff structure and linked files |
 | `hytrax resume "task"` | Assemble bounded context for the next agent |

@@ -32,6 +32,8 @@ export interface OKFMetadata {
   status: OKFStatus;
   /** ISO timestamp when this knowledge was created/updated (OKF standard) */
   timestamp?: string;
+  /** Outcome that caused an automatically generated constraint */
+  sourceOutcome?: string;
 }
 
 export interface OKFDocument {

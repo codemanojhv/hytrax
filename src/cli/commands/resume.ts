@@ -11,6 +11,7 @@ export function resumeCommand(): Command {
     .action((task: string | undefined, opts: { handoff?: string; maxChars: number }) => {
       const root = findHytraxRoot();
       if (!root) { console.error('No .hytrax/ found. Run: npx hytrax init'); process.exit(1); }
-      console.log(renderResume(root!, task || 'current work', opts.handoff, opts.maxChars));
+      try { console.log(renderResume(root!, task || 'current work', opts.handoff, opts.maxChars)); }
+      catch (error) { console.error(error instanceof Error ? error.message : String(error)); process.exit(1); }
     });
 }

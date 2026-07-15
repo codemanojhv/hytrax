@@ -1,10 +1,11 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import type { OKFDocument, OKFMetadata, OKFType, OKFStatus } from './types.js';
+import { decodeText } from '../utils/text.js';
 
 export function parseOKF(filePath: string): OKFDocument | null {
   try {
-    const content = readFileSync(filePath, 'utf-8');
+    const content = decodeText(readFileSync(filePath)).replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
     const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
     if (!match) return null;
 
@@ -22,6 +23,7 @@ export function parseOKF(filePath: string): OKFDocument | null {
       files: Array.isArray(frontmatter.files) ? frontmatter.files : [],
       status: (frontmatter.status as OKFStatus) ?? 'active',
       timestamp: frontmatter.timestamp || undefined,
+      sourceOutcome: frontmatter.source_outcome || undefined,
     };
 
     return { metadata, body, filePath };
@@ -37,7 +39,7 @@ export function parseOKF(filePath: string): OKFDocument | null {
  */
 function scanOKFFiles(dir: string): string[] {
   try {
-    const entries = readdirSync(dir);
+    const entries = readdirSync(dir).sort();
     const files: string[] = [];
 
     for (const entry of entries) {
@@ -67,16 +69,20 @@ export function loadAllOKF(knowledgeDir: string): OKFDocument[] {
     .filter((d): d is OKFDocument => d !== null);
 }
 
+export function listOKFFiles(knowledgeDir: string): string[] {
+  return scanOKFFiles(knowledgeDir);
+}
+
 export function parseYamlBlock(block: string): Record<string, any> {
   const result: Record<string, any> = {};
   let currentKey: string | null = null;
   let currentArray: string[] = [];
 
-  for (const line of block.split('\n')) {
+  for (const line of block.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').split('\n')) {
     const trimmed = line.trim();
 
     if (trimmed.startsWith('- ')) {
-      currentArray.push(trimmed.slice(2).trim());
+      currentArray.push(parseScalar(trimmed.slice(2).trim()));
       if (currentKey) result[currentKey] = [...currentArray];
       continue;
     }
@@ -87,14 +93,14 @@ export function parseYamlBlock(block: string): Record<string, any> {
       currentKey = null;
     }
 
-    const kvMatch = trimmed.match(/^(\w+):\s*(.*)$/);
+    const kvMatch = trimmed.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
     if (kvMatch) {
       currentKey = kvMatch[1];
       const raw = kvMatch[2].trim();
       const inlineArray = raw.match(/^\[(.*)\]$/);
       const val = inlineArray
-        ? inlineArray[1].split(',').map(item => item.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean)
-        : raw.replace(/^['"]|['"]$/g, '');
+        ? splitInlineArray(inlineArray[1]).map(parseScalar).filter(Boolean)
+        : parseScalar(raw);
       result[currentKey] = val;
       currentArray = [];
     }
@@ -105,4 +111,32 @@ export function parseYamlBlock(block: string): Record<string, any> {
   }
 
   return result;
+}
+
+function splitInlineArray(value: string): string[] {
+  const items: string[] = [];
+  let current = '';
+  let quote = '';
+  for (const char of value) {
+    if ((char === '"' || char === "'") && (!quote || quote === char)) quote = quote ? '' : char;
+    if (char === ',' && !quote) {
+      items.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  if (current.trim()) items.push(current.trim());
+  return items;
+}
+
+function parseScalar(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    try { return JSON.parse(trimmed); } catch { return trimmed.slice(1, -1); }
+  }
+  if (trimmed.length >= 2 && trimmed.startsWith("'") && trimmed.endsWith("'")) {
+    return trimmed.slice(1, -1).replace(/''/g, "'");
+  }
+  return trimmed;
 }
