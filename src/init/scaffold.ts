@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync, existsSync, appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,86 +10,6 @@ max_results = 10
 `;
 
 const KNOWLEDGE_SUBDIRS = ['architecture', 'constraints', 'patterns', 'workflows'];
-
-const SAMPLE_ARCHITECTURE = `---
-id: arc-01
-type: architecture
-title: Project Overview
-description: "Add a brief description of your project architecture here."
-tags:
-  - architecture
-files: []
-status: active
-timestamp: ${new Date().toISOString()}
----
-
-# Project Overview
-
-Describe your project architecture here. This is read by your AI coding agent
-at the start of every task to provide context.
-
-## Key Components
-
-(Add key components and their relationships)
-
-## Conventions
-
-(Add project-specific conventions)
-`;
-
-const STARTER_WORKFLOW = `---
-id: wf-01
-type: workflow
-title: Hytrax Knowledge Loop
-description: "Resume shared context before coding, then record a handoff when switching agents."
-tags:
-  - workflow
-  - hytrax
-  - mandatory
-files: []
-status: active
-timestamp: ${new Date().toISOString()}
----
-
-# Hytrax Knowledge Loop
-
-This project uses Hytrax for portable project context. Every agent—Claude Code,
-Codex, OpenCode, or another coding agent—MUST follow this loop:
-
-1. **Resume**: \`npx hytrax resume "<task description>"\`
-2. **Plan**: \`npx hytrax plan "<task description>"\` when no useful handoff exists.
-3. **Work and verify**: Run the project build, tests, and lint checks.
-4. **Handoff**: Save the current state with \`npx hytrax handoff create --stdin\` when pausing or switching agents.
-5. **Record**: \`npx hytrax record --build passed|failed --task "<task>"\`
-6. **Add knowledge**: After discovering durable constraints, patterns, or decisions.
-
-## Why
-
-The handoff is plain Markdown plus simple frontmatter, so it is portable across
-agentic coding platforms and can be piped from any automation.
-`;
-
-const STARTER_CONSTRAINT = `---
-id: con-01
-type: constraint
-title: Hytrax first, code second
-description: "Run hytrax plan before writing any code. Every time."
-tags:
-  - hytrax
-  - constraint
-  - mandatory
-files: []
-status: active
-timestamp: ${new Date().toISOString()}
----
-
-Never write code without first running:
-\`\`\`
-npx hytrax plan "<what you're about to do>"
-\`\`\`
-
-This is not optional. Even if the knowledge directory is empty — that's a signal to backfill, not to skip.
-`;
 
 const AGENT_INSTRUCTIONS = `
 <!-- hytrax:start -->
@@ -108,14 +28,19 @@ After verification, run \`npx hytrax record --build passed|failed --task "<task>
 function bundledSkill(): string {
   const path = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'skills', 'hytrax', 'SKILL.md');
   try { return readFileSync(path, 'utf8'); }
-  catch { return '# Hytrax\n\nUse `hytrax handoff create --stdin` to save context and `hytrax resume "<task>"` to continue it.\n'; }
+  catch { return '# Hytrax\n\nUse `npx hytrax handoff create --stdin` to save context and `npx hytrax resume "<task>"` to continue it.\n'; }
 }
 
-export function installHytraxSkill(projectRoot: string): 'created' | 'exists' {
+export function installHytraxSkill(projectRoot: string): 'created' | 'updated' | 'exists' {
   const filePath = join(projectRoot, '.hytrax', 'skills', 'hytrax', 'SKILL.md');
-  if (existsSync(filePath)) return 'exists';
+  const content = bundledSkill();
+  if (existsSync(filePath)) {
+    if (readFileSync(filePath, 'utf8') === content) return 'exists';
+    writeFileSync(filePath, content, 'utf8');
+    return 'updated';
+  }
   mkdirSync(dirname(filePath), { recursive: true });
-  writeFileSync(filePath, bundledSkill(), 'utf8');
+  writeFileSync(filePath, content, 'utf8');
   return 'created';
 }
 
@@ -141,57 +66,22 @@ export function installAgentInstructions(projectRoot: string, fileName = 'AGENTS
 export function scaffoldHytrax(projectRoot: string): string[] {
   const created: string[] = [];
   const hytraxDir = join(projectRoot, '.hytrax');
+  if (existsSync(hytraxDir)) return ['exists'];
 
-  if (existsSync(hytraxDir)) {
-    installHytraxSkill(projectRoot);
-    return ['exists'];
-  }
-
-  // Create outcomes directory
   mkdirSync(join(hytraxDir, 'outcomes'), { recursive: true });
   created.push('.hytrax/outcomes/');
-
   mkdirSync(join(hytraxDir, 'context', 'handoffs'), { recursive: true });
   created.push('.hytrax/context/handoffs/');
   installHytraxSkill(projectRoot);
   created.push('.hytrax/skills/hytrax/SKILL.md');
 
-  // Create knowledge subdirectories
   for (const subdir of KNOWLEDGE_SUBDIRS) {
     mkdirSync(join(hytraxDir, 'knowledge', subdir), { recursive: true });
     created.push(`.hytrax/knowledge/${subdir}/`);
   }
-
-  // Create config
-  writeFileSync(join(hytraxDir, 'config.toml'), DEFAULT_CONFIG, 'utf-8');
+  writeFileSync(join(hytraxDir, 'config.toml'), DEFAULT_CONFIG, 'utf8');
   created.push('.hytrax/config.toml');
-
-  // Create sample architecture file
-  writeFileSync(
-    join(hytraxDir, 'knowledge', 'architecture', 'overview.md'),
-    SAMPLE_ARCHITECTURE,
-    'utf-8',
-  );
-  created.push('.hytrax/knowledge/architecture/overview.md');
-
-  // Create starter knowledge for the Hytrax loop itself
-  writeFileSync(
-    join(hytraxDir, 'knowledge', 'workflows', 'hytrax-loop.md'),
-    STARTER_WORKFLOW,
-    'utf-8',
-  );
-  created.push('.hytrax/knowledge/workflows/hytrax-loop.md');
-
-  writeFileSync(
-    join(hytraxDir, 'knowledge', 'constraints', 'hytrax-first.md'),
-    STARTER_CONSTRAINT,
-    'utf-8',
-  );
-  created.push('.hytrax/knowledge/constraints/hytrax-first.md');
-
-  // Create empty outcomes file
-  writeFileSync(join(hytraxDir, 'outcomes', 'outcomes.jsonl'), '', 'utf-8');
+  writeFileSync(join(hytraxDir, 'outcomes', 'outcomes.jsonl'), '', 'utf8');
   created.push('.hytrax/outcomes/outcomes.jsonl');
-
   return created;
 }

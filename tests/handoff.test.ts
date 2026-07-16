@@ -52,4 +52,26 @@ describe('portable handoffs', () => {
     expect(plain.sourceAgent).toBe('claude-code');
     expect(plain.task).toBe('finish auth');
   });
+
+  it('uses the newest open handoff when no task is supplied', () => {
+    rmSync(root, { recursive: true, force: true });
+    mkdirSync(join(root, '.hytrax', 'knowledge'), { recursive: true });
+    const older = createHandoff(join(root, '.hytrax'), handoff, { task: 'older task' });
+    const newer = createHandoff(join(root, '.hytrax'), handoff, { task: 'newer task' });
+    const output = renderResume(join(root, '.hytrax'));
+    expect(output).toContain(newer.id);
+    expect(output).not.toContain(older.id);
+  });
+
+  it('overrides structured metadata when the caller supplies defaults', () => {
+    const created = createHandoff(join(root, '.hytrax'), handoff, { sourceAgent: 'opencode', task: 'handoff task' });
+    expect(created.sourceAgent).toBe('opencode');
+    expect(created.task).toBe('handoff task');
+  });
+
+  it('rejects invalid created_at values', () => {
+    const invalid = handoff.replace('created_at: 2026-07-15T00:00:00Z', 'created_at: not-a-date');
+    const parsed = parseHandoffContent(invalid);
+    expect(validateHandoff(parsed!)).toContain('invalid created_at');
+  });
 });

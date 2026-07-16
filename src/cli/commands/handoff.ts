@@ -10,7 +10,7 @@ const TEMPLATE = `---
 id: hnd-new
 type: handoff
 status: open
-source_agent: claude-code
+source_agent: external
 task: "Describe the work"
 created_at: ${new Date().toISOString()}
 tags: [project]
@@ -63,17 +63,22 @@ export function handoffCommand(): Command {
     .description('Store a provider-neutral handoff from a file or stdin (Claude Code, Codex, OpenCode, or any agent)')
     .option('--input <file>', 'Handoff Markdown file')
     .option('--stdin', 'Read handoff Markdown from stdin')
-    .option('--source-agent <agent>', 'Source agent when importing plain Markdown', 'external')
+    .option('--source-agent <agent>', 'Source agent when importing plain Markdown')
     .option('--task <task>', 'Override the task inferred from the Markdown heading')
-    .action((opts: { input?: string; stdin?: boolean; sourceAgent: string; task?: string }) => {
+    .action((opts: { input?: string; stdin?: boolean; sourceAgent?: string; task?: string }) => {
       if ((opts.input ? 1 : 0) + (opts.stdin ? 1 : 0) !== 1) {
         console.error('Choose exactly one of --input <file> or --stdin.');
         process.exit(1);
       }
-      const content = opts.stdin ? readFileSync(0, 'utf8') : decodeText(readFileSync(opts.input!));
-      const handoff = createHandoff(rootOrExit(), content, { sourceAgent: opts.sourceAgent, task: opts.task });
-      console.log(`Created: ${handoff.id}`);
-      console.log(`Stored: ${handoff.filePath}`);
+      try {
+        const content = opts.stdin ? readFileSync(0, 'utf8') : decodeText(readFileSync(opts.input!));
+        const handoff = createHandoff(rootOrExit(), content, { sourceAgent: opts.sourceAgent, task: opts.task });
+        console.log(`Created: ${handoff.id}`);
+        console.log(`Stored: ${handoff.filePath}`);
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
     });
 
   cmd.command('list').description('List stored handoffs').action(() => {

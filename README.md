@@ -110,22 +110,21 @@ interrupting normal work: agents work normally, then respond to requests such as
 "use Hytrax", "save context", or "switch agents". A later agent resumes only when
 the user asks to continue previous work.
 
-### Automation
+### Optional automation
 
-For platforms with lifecycle hooks, run `npx hytrax resume "<task>"` at session start and
-`npx hytrax handoff create --stdin` at session end or before a context switch. You can
-install the same generated instructions into any platform's instruction file:
+Hytrax is user-triggered by default; it does not run at every session start. If your
+agent platform supports lifecycle hooks, you can opt into automatic resume/handoff.
+You can also install the same provider-neutral instructions into any platform's file:
 
 ```bash
 npx hytrax init --agent-instructions AGENTS.md   # Codex, OpenCode and compatible tools
 npx hytrax init --agent-instructions CLAUDE.md   # Claude Code
 ```
 
-Run `npx hytrax record --auto` at session end when desired. It runs the project's `build`,
-then optional `lint` and `test` scripts. It records verification only; use the
-normal `record --task "..."` command when a failure should become project knowledge.
+Run `npx hytrax record --auto` when desired. It runs the project's `build`, then optional
+`lint` and `test` scripts and records verification only.
 
-### The Loop (mandatory)
+### When you ask the agent to use Hytrax
 
 1. **Resume** — `npx hytrax resume "<task description>"`
 2. **Plan** — `npx hytrax plan "<task description>"` when no useful handoff exists
@@ -173,9 +172,8 @@ Legacy `summary` field still parsed as fallback for backward compatibility.
 
 | Command | Purpose |
 |---------|---------|
-| `hytrax init` | Create `.hytrax/` in your project with starter knowledge |
+| `hytrax init` | Create `.hytrax/` and install the provider-neutral skill |
 | `hytrax init --agent-instructions [file]` | Add or update the workflow in any agent instruction file |
-| `hytrax init` | Install the project-local Hytrax agent skill |
 | `hytrax handoff template` | Print the provider-neutral session handoff template |
 | `hytrax handoff create --input HANDOFF.md` | Store a validated handoff in `.hytrax/context/handoffs/` |
 | `hytrax handoff create --stdin` | Store handoff Markdown piped from any agent or hook |
@@ -340,13 +338,16 @@ These are conventions, not a closed enum. Add any type you want.
 # Install
 npm install -D hytrax
 
-# Initialize — creates .hytrax/ with starter knowledge
+# Initialize — creates an empty .hytrax/ store and installs the skill
 npx hytrax init
 
-# Plan before any task — surfaces constraints, avoids, patterns
+# When you ask your agent to use Hytrax, resume saved context
+npx hytrax resume "continue the feature"
+
+# Or plan a new task — surfaces constraints, avoids, patterns
 npx hytrax plan "add a new feature"
 
-# Record after every task — on failure, auto-creates a constraint
+# Optionally record a result — failures auto-create a constraint
 npx hytrax record --build passed --task "added dark mode toggle"
 npx hytrax record --build failed --task "used inline styles"
 # → Constraint auto-created: .hytrax/knowledge/constraints/avoid-used-inline-styles.md

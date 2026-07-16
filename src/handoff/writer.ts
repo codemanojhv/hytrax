@@ -24,6 +24,12 @@ function yamlScalar(value: string): string {
   return JSON.stringify(String(value).replace(/[\r\n]/g, ' ').trim());
 }
 
+function setFrontmatterField(content: string, key: string, value: string): string {
+  const line = `${key}: ${yamlScalar(value)}`;
+  const pattern = new RegExp(`^${key}:\\s*.*$`, 'm');
+  return pattern.test(content) ? content.replace(pattern, line) : content.replace(/^type:\s*.*$/m, match => `${match}\n${line}`);
+}
+
 function nextId(dir: string): string {
   const max = loadHandoffs(dir)
     .map(h => Number(h.id.match(/^hnd-(\d+)$/)?.[1] || 0))
@@ -38,6 +44,7 @@ export function validateHandoff(handoff: HandoffRecord, projectRoot?: string, st
   if (!handoff.task.trim()) errors.push('missing task');
   if (!handoff.sourceAgent.trim()) errors.push('missing source_agent');
   if (!handoff.createdAt.trim()) errors.push('missing created_at');
+  else if (Number.isNaN(Date.parse(handoff.createdAt))) errors.push('invalid created_at');
   if (!/^#{1,6}\s+(Goal|Objective|Current state|Summary|Task)\b/im.test(handoff.body)) errors.push('missing goal/current-state section');
   if (!/^#{1,6}\s+(Next actions|Next steps|Next session|Focus|What.?s next)\b/im.test(handoff.body)) errors.push('missing next-actions section');
   if (strict && projectRoot) {
@@ -55,7 +62,9 @@ export function validateHandoff(handoff: HandoffRecord, projectRoot?: string, st
 export function createHandoff(hytraxRoot: string, content: string, defaults?: { sourceAgent?: string; task?: string }): HandoffRecord {
   const dir = getHandoffsDir(hytraxRoot);
   mkdirSync(dir, { recursive: true });
-  const normalizedInput = parseHandoffContent(content) ? content : envelope(content, defaults?.sourceAgent, defaults?.task);
+  let normalizedInput = parseHandoffContent(content) ? content : envelope(content, defaults?.sourceAgent, defaults?.task);
+  if (defaults?.sourceAgent) normalizedInput = setFrontmatterField(normalizedInput, 'source_agent', defaults.sourceAgent);
+  if (defaults?.task) normalizedInput = setFrontmatterField(normalizedInput, 'task', defaults.task);
   const provisional = parseHandoffContent(normalizedInput);
   if (!provisional) throw new Error('Invalid handoff: expected YAML frontmatter with type: handoff.');
   const id = provisional.id === 'hnd-new' ? nextId(dir) : provisional.id;

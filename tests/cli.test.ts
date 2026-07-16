@@ -67,6 +67,9 @@ describe('CLI integration', () => {
     expect(output).toContain('.hytrax/config.toml');
     expect(existsSync(join(testDir, '.hytrax'))).toBe(true);
     expect(existsSync(join(testDir, '.hytrax', 'config.toml'))).toBe(true);
+    expect(existsSync(join(testDir, '.hytrax', 'skills', 'hytrax', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(testDir, '.hytrax', 'knowledge', 'architecture', 'overview.md'))).toBe(false);
+    expect(existsSync(join(testDir, '.hytrax', 'knowledge', 'constraints', 'hytrax-first.md'))).toBe(false);
   });
 
   it('should add Hytrax instructions without replacing AGENTS.md', () => {

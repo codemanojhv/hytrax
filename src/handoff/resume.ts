@@ -17,14 +17,19 @@ function handoffScore(handoff: HandoffRecord, taskTokens: string[]): number {
   return taskTokens.filter(token => haystack.includes(token)).length;
 }
 
+function newest(handoffs: HandoffRecord[]): HandoffRecord | undefined {
+  return [...handoffs].sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0) || b.id.localeCompare(a.id))[0];
+}
+
 function chooseHandoff(handoffs: HandoffRecord[], task: string, id?: string): HandoffRecord | undefined {
   if (id) return handoffs.find(handoff => handoff.id === id);
   const taskTokens = tokens(task);
-  return handoffs
-    .filter(handoff => handoff.status === 'open')
+  const open = handoffs.filter(handoff => handoff.status === 'open');
+  if (!taskTokens.length) return newest(open);
+  return open
     .map(handoff => ({ handoff, score: handoffScore(handoff, taskTokens) }))
     .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score || Date.parse(b.handoff.createdAt) - Date.parse(a.handoff.createdAt) || a.handoff.id.localeCompare(b.handoff.id))[0]?.handoff;
+    .sort((a, b) => b.score - a.score || Date.parse(b.handoff.createdAt) - Date.parse(a.handoff.createdAt) || b.handoff.id.localeCompare(a.handoff.id))[0]?.handoff;
 }
 
 function bullet(value: string): string {
@@ -41,15 +46,26 @@ function renderHandoff(handoff: HandoffRecord, budget: number): string {
     '  body: |',
   ];
   const available = Math.max(0, budget - prefix.join('\n').length - 1);
+  const allBodyLines = handoff.body.split('\n');
   const bodyLines: string[] = [];
   let used = 0;
-  for (const line of handoff.body.split('\n')) {
+  for (const line of allBodyLines) {
     const rendered = `    ${line}`;
     if (used + rendered.length + 1 > available) break;
     bodyLines.push(rendered);
     used += rendered.length + 1;
   }
-  if (bodyLines.length < handoff.body.split('\n').length) bodyLines.push('    [handoff body truncated]');
+  if (bodyLines.length < allBodyLines.length) {
+    const nextStart = allBodyLines.findIndex(line => /^#{1,6}\s+(Next actions|Next steps|Next session|Focus|What.?s next)\b/i.test(line));
+    if (nextStart >= 0) {
+      const nextEnd = allBodyLines.findIndex((line, index) => index > nextStart && /^#{1,6}\s+/.test(line));
+      const nextLines = allBodyLines.slice(nextStart, nextEnd < 0 ? allBodyLines.length : nextEnd).map(line => `    ${line}`);
+      const combined = [...nextLines, '    [handoff body truncated]'];
+      if (combined.join('\n').length <= available) bodyLines.splice(0, bodyLines.length, ...combined);
+    } else {
+      bodyLines.push('    [handoff body truncated]');
+    }
+  }
   return [...prefix, ...bodyLines].join('\n');
 }
 
@@ -62,7 +78,7 @@ function appendSection(lines: string[], section: string, maxChars: number): bool
   return false;
 }
 
-export function renderResume(hytraxRoot: string, task: string, handoffId?: string, maxChars = 12000): string {
+export function renderResume(hytraxRoot: string, task = '', handoffId?: string, maxChars = 12000): string {
   if (!Number.isInteger(maxChars) || maxChars < 200) throw new Error('maxChars must be an integer of at least 200');
   const allHandoffs = loadHandoffs(getHandoffsDir(hytraxRoot));
   const handoff = chooseHandoff(allHandoffs, task, handoffId);
@@ -73,18 +89,20 @@ export function renderResume(hytraxRoot: string, task: string, handoffId?: strin
   const related = search(hytraxRoot, task, { max: 10, includeKnowledge: true, includeOutcomes: true });
   const knowledge = related.knowledge.filter(doc => doc.metadata.type !== 'constraint');
   const outcomes = related.outcomes.filter(outcome => outcome.status !== 'SUPERSEDED');
-  const lines = [`task: ${yaml(task)}`, 'context_truncated: false'];
+  const displayTask = task.trim() || handoff?.task || 'current work';
+  const lines = [`task: ${yaml(displayTask)}`, 'context_truncated: false'];
   let truncated = false;
 
+  if (constraints.length) {
+    const section = ['active_constraints:', ...constraints.map(doc => bullet(`${doc.metadata.title}: ${doc.metadata.description}`))].join('\n');
+    if (!appendSection(lines, section, maxChars)) truncated = true;
+  }
   if (handoff) {
     const handoffSection = renderHandoff(handoff, Math.floor(maxChars * 0.55));
     if (handoffSection.includes('[handoff body truncated]')) truncated = true;
     if (!appendSection(lines, handoffSection, maxChars)) truncated = true;
   }
-  if (constraints.length) {
-    const section = ['active_constraints:', ...constraints.map(doc => bullet(`${doc.metadata.title}: ${doc.metadata.description}`))].join('\n');
-    if (!appendSection(lines, section, maxChars)) truncated = true;
-  }
+  if (!appendSection(lines, ['verify:', '  - "build"', '  - "lint"'].join('\n'), maxChars)) truncated = true;
   if (knowledge.length) {
     const section = ['relevant_knowledge:', ...knowledge.map(doc => bullet(`${doc.metadata.title} (${doc.metadata.type})`))].join('\n');
     if (!appendSection(lines, section, maxChars)) truncated = true;
@@ -93,7 +111,6 @@ export function renderResume(hytraxRoot: string, task: string, handoffId?: strin
     const section = ['relevant_outcomes:', ...outcomes.map(outcome => bullet(`${outcome.status}: ${outcome.reason || outcome.task}`))].join('\n');
     if (!appendSection(lines, section, maxChars)) truncated = true;
   }
-  if (!appendSection(lines, ['verify:', '  - "build"', '  - "lint"'].join('\n'), maxChars)) truncated = true;
 
   if (truncated) {
     lines[1] = 'context_truncated: true';

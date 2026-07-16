@@ -22,17 +22,17 @@ continue previous work.
 2. Create a handoff using either:
 
    ```sh
-   hytrax handoff template > HANDOFF.md
-   hytrax handoff create --input HANDOFF.md --source-agent <agent-name>
+   npx hytrax handoff template > HANDOFF.md
+   npx hytrax handoff create --input HANDOFF.md --source-agent <agent-name>
    ```
 
    Or pipe generated Markdown:
 
    ```sh
-   <agent-output> | hytrax handoff create --stdin --source-agent <agent-name>
+   <agent-output> | npx hytrax handoff create --stdin --source-agent <agent-name>
    ```
 
-3. Confirm the handoff ID and run `hytrax validate --strict`.
+3. Confirm the handoff ID and run `npx hytrax validate --strict`.
 
 Do not claim a handoff was saved if the command fails validation.
 
@@ -41,31 +41,31 @@ Do not claim a handoff was saved if the command fails validation.
 When the user says to use Hytrax and continue, run:
 
 ```sh
-hytrax resume "<current task>"
+npx hytrax resume "<current task>"
 ```
 
 Read the returned task, handoff, active constraints, related knowledge,
 outcomes, and verification steps before planning or editing. For an exact
-handoff, use `hytrax resume "<task>" --handoff <id>`.
+handoff, use `npx hytrax resume "<task>" --handoff <id>`.
 
 If no useful handoff exists, tell the user briefly and use the normal project
 workflow. Do not invent missing context.
 
 ## Available commands
 
-- `hytrax init --agent-instructions [file]` — install/update the workflow in an
+- `npx hytrax init --agent-instructions [file]` — install/update the workflow in an
   agent instruction file.
-- `hytrax resume "task"` — assemble bounded context for a new session.
-- `hytrax handoff template` — print the portable Markdown template.
-- `hytrax handoff create --input FILE` — store a handoff from a file.
-- `hytrax handoff create --stdin` — store a handoff from a pipe or hook.
-- `hytrax handoff list|show <id>` — inspect saved handoffs.
-- `hytrax handoff complete|supersede <id>` — close old context.
-- `hytrax handoff validate --strict` — validate handoff structure and links.
-- `hytrax plan "task"` — prepare a deterministic execution manifest.
-- `hytrax search "query"` — search project knowledge and outcomes.
-- `hytrax record --build passed|failed --task "task"` — record verification.
-- `hytrax validate --strict` — validate knowledge, handoffs, and linked files.
+- `npx hytrax resume "task"` — assemble bounded context for a new session.
+- `npx hytrax handoff template` — print the portable Markdown template.
+- `npx hytrax handoff create --input FILE` — store a handoff from a file.
+- `npx hytrax handoff create --stdin` — store a handoff from a pipe or hook.
+- `npx hytrax handoff list|show <id>` — inspect saved handoffs.
+- `npx hytrax handoff complete|supersede <id>` — close old context.
+- `npx hytrax handoff validate --strict` — validate handoff structure and links.
+- `npx hytrax plan "task"` — prepare a deterministic execution manifest.
+- `npx hytrax search "query"` — search project knowledge and outcomes.
+- `npx hytrax record --build passed|failed --task "task"` — record verification.
+- `npx hytrax validate --strict` — validate knowledge, handoffs, and linked files.
 
 ## Safety
 

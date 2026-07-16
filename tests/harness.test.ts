@@ -442,11 +442,11 @@ describe('Hytrax Harness Validation — Fresh CLI Pipeline', () => {
     const initOut = execSync(`node "${cliEntry}" init`, { cwd: freshDir, encoding: 'utf-8', timeout: 10000 });
     expect(initOut).toContain('Initialized Hytrax');
 
-    // Validate — starter files are healthy
+    // Validate — an empty knowledge store is valid
     const validateOut = execSync(`node "${cliEntry}" validate`, { cwd: freshDir, encoding: 'utf-8', timeout: 5000 });
     expect(validateOut).toContain('Valid');
 
-    // Plan — works with starter knowledge
+    // Plan — works before project knowledge is added
     const planOut = execSync(`node "${cliEntry}" plan "test my setup"`, { cwd: freshDir, encoding: 'utf-8', timeout: 5000 });
     expect(planOut).toContain('task:');
     expect(planOut).toContain('verify:');
@@ -455,9 +455,9 @@ describe('Hytrax Harness Validation — Fresh CLI Pipeline', () => {
     const recordOut = execSync(`node "${cliEntry}" record --build passed --task "validate pipeline works"`, { cwd: freshDir, encoding: 'utf-8', timeout: 5000 });
     expect(recordOut).toContain('ACCEPTED');
 
-    // Query — human-readable table
+    // Query — empty knowledge is a valid result
     const queryOut = execSync(`node "${cliEntry}" query "hytrax"`, { cwd: freshDir, encoding: 'utf-8', timeout: 5000 });
-    expect(queryOut).toContain('Knowledge:');
+    expect(queryOut.trim()).toBe('');
 
     // Stats — shows 1 outcome
     const statsOut = execSync(`node "${cliEntry}" stats`, { cwd: freshDir, encoding: 'utf-8', timeout: 5000 });
