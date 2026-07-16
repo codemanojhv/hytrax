@@ -76,6 +76,31 @@ Just structured files and a CLI.
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart LR
+    U["Developer"] --> A["Any coding agent\nClaude · Codex · OpenCode · other"]
+    A -->|"user asks to use Hytrax"| C["Hytrax CLI"]
+
+    C <--> K[".hytrax/knowledge\nMarkdown + OKF"]
+    C <--> H[".hytrax/context/handoffs\nPortable Markdown"]
+    C <--> O[".hytrax/outcomes\nAppend-only JSONL"]
+
+    K --> R["Resume / Plan\nbounded context manifest"]
+    H --> R
+    O --> R
+    R --> A
+
+    A -->|"code + verify"| C
+    C -->|"shared through git"| G["Project repository"]
+```
+
+Hytrax stores context locally and deterministically. The agent remains responsible
+for reasoning and code; Git makes the saved context available to the next agent.
+
+---
+
 ## How It Works
 
 ```
