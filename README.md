@@ -404,6 +404,11 @@ sustains itself. Give credit where code is borrowed.
 
 ### Contributing
 
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+
 Issues, PRs, and ideas welcome. Hytrax is built to be minimal by design —
 if you're adding a feature, ask: "Does this require a daemon, a database,
 or an external service?" If yes, it probably doesn't belong here.

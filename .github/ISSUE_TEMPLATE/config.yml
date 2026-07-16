@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security report
+    url: https://github.com/codemanojhv/hytrax/security/advisories/new
+    about: Report vulnerabilities privately.
+
